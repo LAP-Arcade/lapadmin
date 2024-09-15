@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f4f4f4;
+        }
+
+        .widget {
+            max-width: calc(100% - 20px);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background: white;
+            padding: 1em;
+            margin: 1em auto;
+        }
+    </style>
+    {% block styles %}{% endblock %}
+</head>
+<body>
+
+    {% block content %}{% endblock %}
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            M.Datepicker.init(document.querySelectorAll('.datepicker'), {
+                format: 'yyyy-mm-dd',
+            });
+
+            M.Timepicker.init(document.querySelectorAll('.timepicker'), {
+                twelveHour: false,
+            });
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+
+</body>
+</html>

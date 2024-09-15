@@ -1,0 +1,11 @@
+lap2_gentilly:
+  price: 3
+  type: hourly
+
+lap1_gentilly_weekday:
+  price: 5
+  type: entry
+
+lap1_gentilly_weekend:
+  price: 8
+  type: entry

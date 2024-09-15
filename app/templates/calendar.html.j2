@@ -1,0 +1,143 @@
+{% extends "base.html.j2" %}
+{% block styles %}
+<style>
+    #calendar {
+        width: calc(700px + 2rem);
+    }
+
+    #calendar-quick-switch {
+        display: flex;
+        align-items: center;
+    }
+
+    #calendar-quick-switch .material-icons {
+        font-size: 3em;
+    }
+
+    #calendar [type="checkbox"] + span {
+        padding-left: 24px;
+    }
+
+    #calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    #calendar-weekdays {
+        text-align: center;
+        margin-bottom: 1em;
+    }
+
+    #calendar .cell {
+        height: 100px;
+        border: 1px solid black;
+        padding: 0.5em;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+
+    #calendar .cell:hover {
+        background: gold;
+    }
+
+    #calendar .weekend .cell-date { color: red }
+    #calendar .past { background: rgb(230, 230, 230) }
+    #calendar .today { background: lightblue }
+    #calendar .opening { background: lightgreen }
+
+    #calendar .calendar-row {
+        display: flex;
+    }
+
+    #calendar .calendar-row > * {
+        width: calc(100% / 7);
+    }
+
+    #calendar .cell {
+        height: 100px;
+    }
+
+    @media screen and (max-width: 700px) {
+        /* */
+    }
+</style>
+{% endblock styles %}
+
+{% block content %}
+<p>
+    Pour l'instant les dispos servent à rien.
+</p>
+<div id="calendar" class="widget">
+    <header id="calendar-header">
+        <div id="calendar-quick-switch">
+            <a
+                id="calendar-quick-switch-prev"
+                class="material-icons"
+                href="{{ url_for('calendar') }}?month={{ previous }}"
+            >
+                chevron_left
+            </a>
+            <a
+                id="calendar-quick-switch-next"
+                class="material-icons"
+                href="{{ url_for('calendar') }}?month={{ next }}"
+            >
+                chevron_right
+            </a>
+        </div>
+        <h2 id="calendar-title">
+            {{ month.strftime('%B %Y') }}
+        </h2>
+    </header>
+    <main id="calendar-main">
+        <div id="calendar-weekdays" class="calendar-row">
+            <div class="calendar-weekday">Mon</div>
+            <div class="calendar-weekday">Tue</div>
+            <div class="calendar-weekday">Wed</div>
+            <div class="calendar-weekday">Thu</div>
+            <div class="calendar-weekday">Fri</div>
+            <div class="calendar-weekday">Sat</div>
+            <div class="calendar-weekday">Sun</div>
+        </div>
+        <div id="calendar-days">
+            {% for i in range(0, 6) %}
+            <div class="calendar-row">
+                {% for day in days[0 + i * 7:7 + i * 7] %}
+                <a
+                    class="
+                        cell
+                        {% if day.is_past %}past{% endif %}
+                        {% if day.is_today %}today{% endif %}
+                        {% if day.is_weekend %}weekend{% endif %}
+                        {% if day.opening %}opening{% endif %}
+                    "
+                    {% if day.opening %}
+                    href="{{ url_for('opening', id=day.opening.id) }}"
+                    {% else %}
+                    href="{{ url_for('create_opening') }}?day={{ day }}"
+                    {% endif %}
+                >
+                    <span class="cell-date">
+                        {{ day.date.day }}
+                    </span>
+                    <span class="staffings">
+
+                    </span>
+                    <span class="actions">
+                        <label>
+                            <input type="checkbox">
+                            <span>Dispo</span>
+                        </label>
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+</div>
+{% endblock content %}
