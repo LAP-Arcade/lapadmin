@@ -25,6 +25,38 @@
     {% block styles %}{% endblock %}
 </head>
 <body>
+    <nav>
+        <div class="nav-wrapper">
+            <a href="{{ url_for('index') }}" class="brand-logo">Lapadmin</a>
+            <ul class="right">
+                <li><a href="{{ url_for('calendar_redirect') }}">Calendrier</a></li>
+                <li><a href="{{ url_for('calendar_day', month=now.format('YYYY-MM'), day=now.format('DD')) }}">Aujourd'hui</a></li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container">
+        {% for category, message in get_flashed_messages(with_categories=true) %}
+        {% macro get_category_class(category) %}
+        {% if category == 'error' %}
+        red darken-1
+        {% elif category == 'warning' %}
+        orange darken-1
+        {% elif category == 'success' %}
+        green darken-1
+        {% else %}
+        blue lighten-4
+        {% endif %}
+        {% endmacro %}
+        <div class="flash {{ category }} card-panel {{ get_category_class(category) }}">
+            <span class="content">
+                {{ message | e }}
+            </span>
+            <span class="flash-close">
+                <span class="material-icons icon">close</span>
+            </span>
+        </div>
+        {% endfor %}
+    </div>
 
     {% block content %}{% endblock %}
 
@@ -39,6 +71,7 @@
             M.Timepicker.init(document.querySelectorAll('.timepicker'), {
                 twelveHour: false,
             });
+            M.FormSelect.init(document.querySelectorAll('select'));
         });
     </script>
     {% block scripts %}{% endblock %}

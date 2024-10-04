@@ -31,27 +31,26 @@ class Day:
 
     @property
     def is_past(self):
-        return self.date < Arrow.now()
+        return self.date < Arrow.fromdate(Arrow.now().date())
 
     def __str__(self):
-        return self.date.format("YYYY-MM-DD")
+        return self.date.format("D")
 
 
 @app.get("/calendar/")
-def calendar():
-    month = flask.request.args.get("month")
-    if not month:
-        today = Arrow.now()
-        month = today.format("YYYY-MM")
-        redirect = app.redirect("calendar", code=303)
-        redirect.headers["Location"] += f"?month={month}"
-        return redirect
+def calendar_redirect():
+    today = Arrow.now()
+    month = today.format("YYYY-MM")
+    return app.redirect("calendar_month", month=month)
 
-    month = Arrow.fromdate(datetime.strptime(month, "%Y-%m"))
-    previous = month.shift(months=-1).format("YYYY-MM")
-    next = month.shift(months=1).format("YYYY-MM")
-    start = get_calendar_start(month)
-    end = get_calendar_end(month)
+
+@app.get("/calendar/<month>/")
+def calendar_month(month):
+    date = Arrow.fromdate(datetime.strptime(month, "%Y-%m"))
+    previous = date.shift(months=-1).format("YYYY-MM")
+    next = date.shift(months=1).format("YYYY-MM")
+    start = get_calendar_start(date)
+    end = get_calendar_end(date)
     with app.session() as s:
         openings = s.query(Opening).filter(
             Opening.start >= start.datetime, Opening.start < end.datetime
@@ -66,5 +65,10 @@ def calendar():
             Day(date=day, opening=openings_by_iso.get(day.date().isoformat()))
         )
     return app.render(
-        "calendar", days=days, previous=previous, next=next, month=month
+        "calendar",
+        days=days,
+        previous=previous,
+        next=next,
+        date=date,
+        month=month,
     )

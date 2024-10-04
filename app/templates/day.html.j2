@@ -1,0 +1,110 @@
+{% extends "base.html.j2" %}
+
+{% block styles %}
+<style>
+.title {
+    font-size: 1.5em;
+    margin: 0.25em 0 1em;
+}
+
+.opening header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>{{ date | arrow('format', 'D MMM YYYY') }}</h1>
+</div>
+
+{% for opening in openings %}
+<div class="container widget opening">
+    <header>
+        <div class="title">
+            {{ opening.start | arrow('time') }}
+            -
+            {{ opening.end | arrow('time') }}
+        </div>
+        <div class="actions">
+            <form action="{{ url_for('opening_delete', id=opening.id) }}" method="post">
+                <button class="btn waves-effect waves-light red" type="submit">
+                    <i class="material-icons">delete</i>
+                </button>
+            </form>
+        </div>
+    </header>
+</div>
+{% endfor %}
+
+<div class="container widget">
+    <div class="title">Créer une ouverture</div>
+    {% for field, errors in form.errors.items() %}
+    <div class="card-panel red lighten-4">
+        <strong>{{ form[field].label }} :</strong> {{ errors | join(', ') }}
+    </div>
+    {% endfor %}
+    <form action="." method="post">
+        {{ form.hidden_tag() }}
+        <div class="row">
+            <div class="input-field col s6">
+                <i class="material-icons prefix">date_range</i>
+                <input
+                    type="text"
+                    name="{{ form.start_date.name }}"
+                    id="{{ form.start_date.id }}"
+                    class="datepicker"
+                    value="{{ form.start_date.data }}"
+                    disabled="disabled"
+                >
+                {{ form.start_date.label }}
+            </div>
+            <div class="input-field col s6">
+                <i class="material-icons prefix">access_time</i>
+                <input
+                    type="text"
+                    name="{{ form.start_time.name }}"
+                    id="{{ form.start_time.id }}"
+                    class="timepicker"
+                    value="{{ form.start_time.data or '16:00'}}"
+                >
+                {{ form.start_time.label }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s6">
+                <i class="material-icons prefix">date_range</i>
+                <input
+                    type="text"
+                    name="{{ form.end_date.name }}"
+                    id="{{ form.end_date.id }}"
+                    class="datepicker"
+                    value="{{ form.end_date.data }}"
+                >
+                {{ form.end_date.label }}
+            </div>
+            <div class="input-field col s6">
+                <i class="material-icons prefix">access_time</i>
+                <input
+                    type="text"
+                    name="{{ form.end_time.name }}"
+                    id="{{ form.end_time.id }}"
+                    class="timepicker"
+                    value="{{ form.end_time.data or '22:00' }}"
+                >
+                {{ form.end_time.label }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s3">
+                {{ form.scope }}
+                {{ form.scope.label }}
+            </div>
+        </div>
+        <button class="btn waves-effect waves-light" type="submit">Créer</button>
+    </form>
+</div>
+
+{% endblock %}

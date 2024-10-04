@@ -3,6 +3,7 @@
 <style>
     #calendar {
         width: calc(700px + 2rem);
+        min-width: calc(700px + 2rem);
     }
 
     #calendar-quick-switch {
@@ -37,6 +38,8 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        position: relative;
+        overflow: hidden;
     }
 
 
@@ -46,8 +49,18 @@
 
     #calendar .weekend .cell-date { color: red }
     #calendar .past { background: rgb(230, 230, 230) }
-    #calendar .today { background: lightblue }
     #calendar .opening { background: lightgreen }
+
+    #calendar .today:after {
+        content: '';
+        position: absolute;
+        top: -20px;
+        right: -20px;
+        background: red;
+        width: 40px;
+        height: 40px;
+        transform: rotate(45deg);
+    }
 
     #calendar .calendar-row {
         display: flex;
@@ -68,29 +81,26 @@
 {% endblock styles %}
 
 {% block content %}
-<p>
-    Pour l'instant les dispos servent à rien.
-</p>
 <div id="calendar" class="widget">
     <header id="calendar-header">
         <div id="calendar-quick-switch">
             <a
                 id="calendar-quick-switch-prev"
                 class="material-icons"
-                href="{{ url_for('calendar') }}?month={{ previous }}"
+                href="{{ url_for('calendar_month', month=previous) }}"
             >
                 chevron_left
             </a>
             <a
                 id="calendar-quick-switch-next"
                 class="material-icons"
-                href="{{ url_for('calendar') }}?month={{ next }}"
+                href="{{ url_for('calendar_month', month=next) }}"
             >
                 chevron_right
             </a>
         </div>
         <h2 id="calendar-title">
-            {{ month.strftime('%B %Y') }}
+            {{ date.strftime('%B %Y') }}
         </h2>
     </header>
     <main id="calendar-main">
@@ -115,14 +125,10 @@
                         {% if day.is_weekend %}weekend{% endif %}
                         {% if day.opening %}opening{% endif %}
                     "
-                    {% if day.opening %}
-                    href="{{ url_for('opening', id=day.opening.id) }}"
-                    {% else %}
-                    href="{{ url_for('create_opening') }}?day={{ day }}"
-                    {% endif %}
+                    href="{{ url_for('calendar_day', month=day.date.format('YYYY-MM'), day=day.date.format('DD')) }}"
                 >
                     <span class="cell-date">
-                        {{ day.date.day }}
+                        {{ day }}
                     </span>
                     <span class="staffings">
 

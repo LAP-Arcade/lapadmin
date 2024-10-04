@@ -1,5 +1,7 @@
 alembic
 Arrow
+black
 Flask
 pyhumps
 SQLAlchemy
+Flask-WTF
