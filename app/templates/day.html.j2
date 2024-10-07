@@ -27,6 +27,7 @@
             {{ opening.start | arrow('time') }}
             -
             {{ opening.end | arrow('time') }}
+            <span class="badge">{{ opening.scope }}</span>
         </div>
         <div class="actions">
             <form action="{{ url_for('opening_delete', id=opening.id) }}" method="post">
@@ -36,16 +37,35 @@
             </form>
         </div>
     </header>
+    <main>
+        <div class="row">
+            <div class="input-field col s10">
+                <label>Ajouter un visiteur</label>
+                <input type="text" class="autocomplete visitor-input">
+            </div>
+            <div class="input-field col s2">
+                <button class="btn waves-effect waves-light" type="submit">
+                    <i class="material-icons">add</i>
+                </button>
+            </div>
+        </div>
+        <ul class="collection">
+            {% for visitor in opening.visitors %}
+            <li class="collection-item">
+                {% include "_visitor_item.html.j2" %}
+                <a class="right" href="{{ url_for('visitor_edit', id=visitor.id) }}">
+                    <i class="material-icons">edit</i>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </main>
 </div>
 {% endfor %}
 
 <div class="container widget">
     <div class="title">Créer une ouverture</div>
-    {% for field, errors in form.errors.items() %}
-    <div class="card-panel red lighten-4">
-        <strong>{{ form[field].label }} :</strong> {{ errors | join(', ') }}
-    </div>
-    {% endfor %}
+    {% include "_form_errors.html.j2" %}
     <form action="." method="post">
         {{ form.hidden_tag() }}
         <div class="row">
@@ -108,3 +128,20 @@
 </div>
 
 {% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const visitors = {{ visitors | tojson }};
+    for (let el of document.querySelectorAll('.visitor-input')) {
+        M.Autocomplete.init(el, {
+            data: visitors.reduce((acc, visitor) => {
+                acc[visitor] = null;
+                return acc;
+            }, {}),
+            minLength: 0,
+        });
+    }
+});
+</script>
+{% endblock scripts %}

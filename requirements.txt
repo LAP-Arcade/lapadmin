@@ -2,6 +2,9 @@ alembic
 Arrow
 black
 Flask
+Flask-WTF
+gspread
+Pydantic
 pyhumps
 SQLAlchemy
-Flask-WTF
+unidecode

@@ -1,0 +1,38 @@
+{% extends "base.html.j2" %}
+
+{% block content %}
+
+<div class="container">
+    <h1>Éditer <small>{{ visitor }}</small></h1>
+
+    {% include "_form_errors.html.j2" %}
+
+    <form method="post" action="." class="widget">
+        {{ form.hidden_tag() }}
+        <div class="row">
+            <div class="input-field col s6">
+                {{ form.first_name.label }}
+                {{ form.first_name }}
+            </div>
+            <div class="input-field col s6">
+                {{ form.last_name.label }}
+                {{ form.last_name }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s6">
+                {{ form.nick.label }}
+                {{ form.nick }}
+            </div>
+            <div class="input-field col s6">
+                {{ form.email.label }}
+                {{ form.email }}
+            </div>
+        </div>
+
+        <button class="btn waves-effect waves-light" type="submit" name="action">Enregistrer
+            <i class="material-icons right">send</i>
+        </button>
+    </form>
+</div>
+{% endblock content %}

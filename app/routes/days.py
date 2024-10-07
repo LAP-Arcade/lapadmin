@@ -6,7 +6,7 @@ from wtforms import SelectField, StringField
 from wtforms.validators import DataRequired
 
 from app import app
-from app.db import Opening
+from app.db import Opening, Visitor
 
 
 def get_translated_scopes() -> dict[str, str]:
@@ -59,7 +59,9 @@ def calendar_day(month, day):
             f"{form.end_date.data} {form.end_time.data}", datetime_format
         )
         with app.session() as s:
-            opening = Opening(start=start_date, end=end_date)
+            opening = Opening(
+                start=start_date, end=end_date, scope=form.scope.data
+            )
             s.add(opening)
             s.commit()
             flask.flash(f"L'ouverture du {start_date} a été crée.")
@@ -71,4 +73,12 @@ def calendar_day(month, day):
         )
 
     form.end_date.data = form.end_date.data or date
-    return app.render("day", form=form, openings=openings, date=date)
+
+    with app.session() as s:
+        visitors = [
+            f"{v} (#{v.id})"
+            for v in sorted(s.query(Visitor), key=lambda x: str(x).lower())
+        ]
+    return app.render(
+        "day", form=form, openings=openings, date=date, visitors=visitors
+    )

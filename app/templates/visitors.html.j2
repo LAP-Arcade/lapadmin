@@ -1,0 +1,40 @@
+{% extends "base.html.j2" %}
+
+{% block styles %}
+<style>
+</style>
+{% endblock styles %}
+
+{% block content %}
+
+<div class="container">
+    <h1>Visiteurs</h1>
+
+    <p>
+        Total : {{ visitors|length }}
+    </p>
+
+    <div class="row">
+        <div class="col s12">
+            <a href="{{ url_for('visitor_new') }}">
+                <i class="material-icons icon">add</i>
+                Nouveau visiteur
+            </a>
+        </div>
+    </div>
+
+    <ul class="collection" id="visitors">
+        {% for visitor in visitors %}
+        <li class="collection-item">
+            <a href="{{ url_for('visitor_edit', id=visitor.id) }}">
+            {% include "_visitor_item.html.j2" %}
+            </a>
+            {% if visitor.is_incomplete %}
+            <span class="badge red" data-badge-caption="incomplet"></span>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% endblock %}

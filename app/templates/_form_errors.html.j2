@@ -1,0 +1,5 @@
+{% for field, errors in form.errors.items() %}
+<div class="card-panel red lighten-4">
+    <strong>{{ form[field].label }} :</strong> {{ errors | join(', ') }}
+</div>
+{% endfor %}

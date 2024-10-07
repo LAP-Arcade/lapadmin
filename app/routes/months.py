@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-import flask
 from arrow import Arrow
 
 from app import app

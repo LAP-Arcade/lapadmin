@@ -14,6 +14,34 @@
             background: #f4f4f4;
         }
 
+        a:hover {
+            text-decoration: underline;
+        }
+
+        span.badge {
+            float: unset;
+            color: white;
+            font-weight: 300;
+            font-size: 0.8rem;
+            background-color: #26a69a;
+            border-radius: 2px;
+        }
+
+        nav .brand-logo {
+            left: 0;
+            transform: none;
+        }
+
+        .material-icons {
+            vertical-align: middle;
+            position: relative;
+            top: -0.1em;
+        }
+
+        .btn .material-icons {
+            top: 0;
+        }
+
         .widget {
             max-width: calc(100% - 20px);
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -21,16 +49,22 @@
             padding: 1em;
             margin: 1em auto;
         }
+
+        .flash-close {
+            float: right;
+            cursor: pointer;
+        }
     </style>
     {% block styles %}{% endblock %}
 </head>
 <body>
     <nav>
-        <div class="nav-wrapper">
+        <div class="nav-wrapper container">
             <a href="{{ url_for('index') }}" class="brand-logo">Lapadmin</a>
             <ul class="right">
                 <li><a href="{{ url_for('calendar_redirect') }}">Calendrier</a></li>
                 <li><a href="{{ url_for('calendar_day', month=now.format('YYYY-MM'), day=now.format('DD')) }}">Aujourd'hui</a></li>
+                <li><a href="{{ url_for('visitors') }}">Visiteurs</a></li>
             </ul>
         </div>
     </nav>
@@ -71,7 +105,14 @@
             M.Timepicker.init(document.querySelectorAll('.timepicker'), {
                 twelveHour: false,
             });
+
             M.FormSelect.init(document.querySelectorAll('select'));
+
+            for (let el of document.querySelectorAll('.flash-close')) {
+                el.addEventListener('click', function() {
+                    this.parentElement.remove();
+                });
+            }
         });
     </script>
     {% block scripts %}{% endblock %}
