@@ -22,3 +22,8 @@ def migration(name=None):
         return
     name = " ".join(name)
     alembic.command.revision(db.alembic_cfg, autogenerate=True, message=name)
+
+
+@group.command()
+def create_all():
+    db.create_all(force=True)

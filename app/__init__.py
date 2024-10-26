@@ -5,6 +5,7 @@ import flask
 import werkzeug.utils
 from arrow import Arrow
 from flask import Flask
+from pydantic import BaseModel
 
 ROOT_DIR = Path(__file__).parent.resolve()
 VAR_DIR = Path("var").resolve()
@@ -50,6 +51,14 @@ class App(Flask):
 
     def session(self, **kwargs):
         return db.session(**kwargs)
+
+    def make_response(self, return_value):
+        if isinstance(return_value, BaseModel):
+            return_value: BaseModel = return_value
+            return flask.jsonify(return_value.model_dump())
+        if return_value is None:
+            return flask.Response(status=204)
+        return super().make_response(return_value)
 
 
 app = App()

@@ -1,4 +1,9 @@
-from . import Column, Id, Table, column
+from typing import TYPE_CHECKING
+
+from . import Column, Id, Table, column, relation
+
+if TYPE_CHECKING:
+    from . import Visit
 
 
 class Visitor(Table, Id):
@@ -6,6 +11,8 @@ class Visitor(Table, Id):
     last_name: Column[str] = column(nullable=True)
     nick: Column[str] = column(nullable=True)
     email: Column[str] = column(nullable=True)
+
+    visits: Column[list["Visit"]] = relation("Visit", back_populates="visitor")
 
     @property
     def full_name(self):

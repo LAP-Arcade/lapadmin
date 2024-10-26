@@ -76,8 +76,8 @@ class Table(DeclarativeBase):
         return result
 
 
-def create_all():
-    if sa.inspect(engine).has_table("alembic_version"):
+def create_all(force=False):
+    if not force and sa.inspect(engine).has_table("alembic_version"):
         alembic.command.upgrade(alembic_cfg, "head")
     else:
         Table.metadata.create_all(engine)
@@ -103,7 +103,7 @@ from sqlalchemy.orm import relationship as relation  # noqa: E402 F401
 from .booking import Booking  # noqa: E402 F401
 from .opening import Opening  # noqa: E402 F401
 from .pricing import Pricing  # noqa: E402 F401
+from .relationships.visit import Visit  # noqa: E402 F401
 from .staff import Staff  # noqa: E402 F401
 from .staffing import Staffing  # noqa: E402 F401
-from .visit import Visit  # noqa: E402 F401
 from .visitor import Visitor  # noqa: E402 F401

@@ -33,18 +33,6 @@ class CreateOpeningForm(FlaskForm):
     )
 
 
-@app.post("/openings/<id>/delete")
-def opening_delete(id):
-    with app.session() as s:
-        opening = s.query(Opening).get(id)
-        month = opening.start.strftime("%Y-%m")
-        day = opening.start.strftime("%d")
-        s.delete(opening)
-        s.commit()
-        flask.flash(f"L'ouverture du {opening.start} a été supprimée.")
-    return app.redirect("calendar_day", month=month, day=day)
-
-
 @app.route("/calendar/<month>/<day>/")
 def calendar_day(month, day):
     date = f"{month}-{day}"

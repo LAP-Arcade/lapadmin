@@ -2,6 +2,9 @@
 
 {% block styles %}
 <style>
+.actions a:hover {
+    text-decoration: none;
+}
 .title {
     font-size: 1.5em;
     margin: 0.25em 0 1em;
@@ -12,6 +15,16 @@
     justify-content: space-between;
     align-items: center;
 }
+
+.visit .mark-finished,
+.visit .mark-paused,
+.visit.started .mark-started {
+    display: none;
+}
+.visit.started .mark-paused,
+.visit.started .mark-finished {
+    display: initial;
+}
 </style>
 {% endblock %}
 
@@ -21,7 +34,7 @@
 </div>
 
 {% for opening in openings %}
-<div class="container widget opening">
+<div class="container widget opening" data-opening="{{ opening.id }}">
     <header>
         <div class="title">
             {{ opening.start | arrow('time') }}
@@ -41,22 +54,54 @@
         <div class="row">
             <div class="input-field col s10">
                 <label>Ajouter un visiteur</label>
-                <input type="text" class="autocomplete visitor-input">
+                <input type="text" class="autocomplete visitor-input" name="add-visitor-text">
             </div>
             <div class="input-field col s2">
-                <button class="btn waves-effect waves-light" type="submit">
+                <button class="btn waves-effect waves-light" type="submit" name="add-visitor-button">
                     <i class="material-icons">add</i>
                 </button>
             </div>
         </div>
         <ul class="collection">
-            {% for visitor in opening.visitors %}
-            <li class="collection-item">
+            {% for visit in opening.visits %}
+            {% with visitor = visit.visitor %}
+            <li
+                class="
+                    visit
+                    collection-item
+                    {% if visit.paid %}
+                    paid
+                    {% else %}
+                    unpaid
+                    {% endif %}
+                    "
+                data-visitor-id="{{ visitor.id }}"
+            >
                 {% include "_visitor_item.html.j2" %}
-                <a class="right" href="{{ url_for('visitor_edit', id=visitor.id) }}">
+                <a href="{{ url_for('visitor_edit', id=visitor.id) }}">
                     <i class="material-icons">edit</i>
                 </a>
+                {% if visit.finished and not visit.paid %}
+                <span class="badge red">
+                    Impayé
+                </span>
+                {% endif %}
+                <span class="right actions">
+                    <a class="mark-started">
+                        <i class="material-icons">play_arrow</i>
+                    </a>
+                    <a class="mark-paused">
+                        <i class="material-icons">pause</i>
+                    </a>
+                    <a class="mark-finished">
+                        <i class="material-icons">stop</i>
+                    </a>
+                    <a class="delete">
+                        <i class="material-icons">delete</i>
+                    </a>
+                </span>
             </li>
+            {% endwith %}
             {% endfor %}
         </ul>
     </main>
@@ -141,6 +186,60 @@ document.addEventListener('DOMContentLoaded', () => {
             }, {}),
             minLength: 0,
         });
+    }
+
+    for (const openingContainer of document.querySelectorAll('[data-opening]')) {
+        const addVisitorButton = openingContainer.querySelector('[name="add-visitor-button"]');
+        const input = openingContainer.querySelector('[name="add-visitor-text"]');
+        const openingId = openingContainer.dataset.opening;
+
+        addVisitorButton.addEventListener('click', async () => {
+            const visitor = input.value;
+            const visitorId = visitor.match(/\(#(\d+)\)$/);
+            if (!visitorId)
+                return;
+
+            const result = await fetch(`/api/openings/${openingId}/visitors/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ visitor_id: visitorId[1] }),
+            })
+            if (!result.ok) {
+                console.error('Failed to add visitor');
+                return;
+            }
+            window.location.href = window.location.href;
+        });
+
+        for (const visitContainer of openingContainer.querySelectorAll('.visit')) {
+            const visitorId = visitContainer.dataset.visitorId;
+            const startButton = visitContainer.querySelector('.mark-started');
+            const finishButton = visitContainer.querySelector('.mark-finished');
+            const deleteButton = visitContainer.querySelector('.delete');
+
+            startButton.addEventListener('click', async () => {
+                visitContainer.classList.add('started');
+                visitContainer.classList.remove('finished');
+            });
+
+            finishButton.addEventListener('click', async () => {
+                visitContainer.classList.remove('started');
+                visitContainer.classList.add('finished');
+            });
+
+            deleteButton.addEventListener('click', async () => {
+                const result = await fetch(`/api/openings/${openingId}/visitors/${visitorId}`, {
+                    method: 'DELETE',
+                });
+                if (!result.ok) {
+                    console.error('Failed to delete visitor');
+                    return;
+                }
+                visitContainer.remove();
+            });
+        }
     }
 });
 </script>
