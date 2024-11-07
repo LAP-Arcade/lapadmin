@@ -25,6 +25,7 @@ class App(Flask):
 
         secret_key_path = VAR_DIR / "secret_key.txt"
         if not secret_key_path.exists():
+            secret_key_path.parent.mkdir(exist_ok=True, parents=True)
             secret_key_path.write_text(secrets.token_hex())
         self.config["SECRET_KEY"] = secret_key_path.read_text().strip()
 
