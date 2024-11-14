@@ -1,6 +1,6 @@
-from app import app
+from app import app, private
 
 
-@app.get("/")
+@private.get("/")
 def index():
-    return app.redirect("calendar_redirect")
+    return app.redirect(".calendar_redirect")

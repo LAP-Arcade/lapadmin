@@ -2,11 +2,11 @@ import flask
 from flask_wtf import FlaskForm
 from wtforms import EmailField, StringField
 
-from app import app
+from app import app, private
 from app.db import Visitor
 
 
-@app.get("/visitors/")
+@private.get("/visitors/")
 def visitors():
     with app.session() as s:
         visitors = s.query(Visitor).all()
@@ -21,7 +21,7 @@ class VisitorEditForm(FlaskForm):
     nick = StringField("Surnom")
 
 
-@app.route("/visitors/<int:id>/")
+@private.route("/visitors/<int:id>/")
 def visitor_edit(id):
     with app.session() as s:
         visitor = s.query(Visitor).filter_by(id=id).first()
@@ -42,10 +42,10 @@ def visitor_edit(id):
         s.commit()
         flask.flash(f"Profil du visiteur {visitor} enregistré")
 
-    return flask.redirect("visitors")
+    return flask.redirect(".visitors")
 
 
-@app.route("/visitors/new/")
+@private.route("/visitors/new/")
 def visitor_new():
     form = VisitorEditForm()
 

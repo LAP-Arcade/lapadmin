@@ -43,7 +43,7 @@
             <span class="badge">{{ opening.scope }}</span>
         </div>
         <div class="actions">
-            <form action="{{ url_for('opening_delete', id=opening.id) }}" method="post">
+            <form action="{{ url_for('.opening_delete', id=opening.id) }}" method="post">
                 <button class="btn waves-effect waves-light red" type="submit">
                     <i class="material-icons">delete</i>
                 </button>
@@ -78,7 +78,7 @@
                 data-visitor-id="{{ visitor.id }}"
             >
                 {% include "_visitor_item.html.j2" %}
-                <a href="{{ url_for('visitor_edit', id=visitor.id) }}">
+                <a href="{{ url_for('.visitor_edit', id=visitor.id) }}">
                     <i class="material-icons">edit</i>
                 </a>
                 {% if visit.finished and not visit.paid %}

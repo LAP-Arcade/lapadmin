@@ -3,11 +3,11 @@ import typing as t
 import flask
 from pydantic import BaseModel, Field
 
-from app import app
+from app import app, private
 from app.db import Opening, Visit, Visitor
 
 
-@app.post("/openings/<id>/delete")
+@private.post("/openings/<id>/delete")
 def opening_delete(id):
     with app.session() as s:
         opening = s.query(Opening).get(id)
@@ -16,7 +16,7 @@ def opening_delete(id):
         s.delete(opening)
         s.commit()
         flask.flash(f"L'ouverture du {opening.start} a été supprimée.")
-    return app.redirect("calendar_day", month=month, day=day)
+    return app.redirect(".calendar_day", month=month, day=day)
 
 
 class OpeningVisitorModel(BaseModel):
@@ -25,7 +25,7 @@ class OpeningVisitorModel(BaseModel):
     full_name: str
 
 
-@app.post("/api/openings/<id>/visitors/")
+@private.post("/api/openings/<id>/visitors/")
 def add_opening_visitor(id):
     with app.session() as s:
         opening = s.query(Opening).get(id)
@@ -35,7 +35,7 @@ def add_opening_visitor(id):
         s.commit()
 
 
-@app.delete("/api/openings/<opening_id>/visitors/<visitor_id>")
+@private.delete("/api/openings/<opening_id>/visitors/<visitor_id>")
 def delete_visit(opening_id, visitor_id):
     with app.session() as s:
         visit = s.query(Visit).get(

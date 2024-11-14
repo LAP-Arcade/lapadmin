@@ -5,7 +5,7 @@ from flask_wtf import FlaskForm
 from wtforms import SelectField, StringField
 from wtforms.validators import DataRequired
 
-from app import app
+from app import app, private
 from app.db import Opening, Visitor
 
 
@@ -33,7 +33,7 @@ class CreateOpeningForm(FlaskForm):
     )
 
 
-@app.route("/calendar/<month>/<day>/")
+@private.route("/calendar/<month>/<day>/")
 def calendar_day(month, day):
     date = f"{month}-{day}"
     form = CreateOpeningForm()

@@ -4,18 +4,21 @@ from pathlib import Path
 import flask
 import werkzeug.utils
 from arrow import Arrow
-from flask import Flask
+from flask import Blueprint, Flask
 from pydantic import BaseModel
 
 ROOT_DIR = Path(__file__).parent.resolve()
 VAR_DIR = Path("var").resolve()
 
 from app import auto_import, db  # noqa: E402
+from app.config import Config
 
 
 class App(Flask):
     def __init__(self):
         super().__init__(__name__)
+        self.g = {}
+        self.config.from_object(Config())
 
         @self.context_processor
         def _():
@@ -63,13 +66,25 @@ class App(Flask):
 
 
 app = App()
+private = Blueprint("private", __name__)
 
 auto_import.auto_import("routes")
 auto_import.auto_import("cli")
 auto_import.auto_import("filters")
 
-if app.debug:
-    VAR_DIR.mkdir(exist_ok=True)
-    app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.register_blueprint(private)
 
-    db.create_all()
+
+def create_app():
+
+    if app.debug:
+        VAR_DIR.mkdir(exist_ok=True)
+        app.config["TEMPLATES_AUTO_RELOAD"] = True
+
+        db.create_all()
+
+    from app import data
+
+    data.reset_staffs()
+
+    return app

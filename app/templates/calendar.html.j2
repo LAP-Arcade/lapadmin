@@ -91,14 +91,14 @@
             <a
                 id="calendar-quick-switch-prev"
                 class="material-icons"
-                href="{{ url_for('calendar_month', month=previous) }}"
+                href="{{ url_for('.calendar_month', month=previous) }}"
             >
                 chevron_left
             </a>
             <a
                 id="calendar-quick-switch-next"
                 class="material-icons"
-                href="{{ url_for('calendar_month', month=next) }}"
+                href="{{ url_for('.calendar_month', month=next) }}"
             >
                 chevron_right
             </a>
@@ -129,7 +129,7 @@
                         {% if day.is_weekend %}weekend{% endif %}
                         {% if day.opening %}opening{% endif %}
                     "
-                    href="{{ url_for('calendar_day', month=day.date.format('YYYY-MM'), day=day.date.format('DD')) }}"
+                    href="{{ url_for('.calendar_day', month=day.date.format('YYYY-MM'), day=day.date.format('DD')) }}"
                 >
                     <span class="cell-date">
                         {{ day }}

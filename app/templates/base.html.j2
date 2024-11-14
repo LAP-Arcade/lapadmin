@@ -69,11 +69,11 @@
 <body>
     <nav>
         <div class="nav-wrapper container">
-            <a href="{{ url_for('index') }}" class="brand-logo">Lapadmin</a>
+            <a href="{{ url_for('.index') }}" class="brand-logo">Lapadmin</a>
             <ul class="right">
-                <li><a href="{{ url_for('calendar_redirect') }}">Calendrier</a></li>
-                <li><a href="{{ url_for('calendar_day', month=now.format('YYYY-MM'), day=now.format('DD')) }}">Aujourd'hui</a></li>
-                <li><a href="{{ url_for('visitors') }}">Visiteurs</a></li>
+                <li><a href="{{ url_for('.calendar_redirect') }}">Calendrier</a></li>
+                <li><a href="{{ url_for('.calendar_day', month=now.format('YYYY-MM'), day=now.format('DD')) }}">Aujourd'hui</a></li>
+                <li><a href="{{ url_for('.visitors') }}">Visiteurs</a></li>
             </ul>
         </div>
     </nav>

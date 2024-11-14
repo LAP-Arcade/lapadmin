@@ -3,7 +3,7 @@ from datetime import datetime
 
 from arrow import Arrow
 
-from app import app
+from app import app, private
 from app.db import Opening
 
 
@@ -36,14 +36,14 @@ class Day:
         return self.date.format("D")
 
 
-@app.get("/calendar/")
+@private.get("/calendar/")
 def calendar_redirect():
     today = Arrow.now()
     month = today.format("YYYY-MM")
-    return app.redirect("calendar_month", month=month)
+    return app.redirect(".calendar_month", month=month)
 
 
-@app.get("/calendar/<month>/")
+@private.get("/calendar/<month>/")
 def calendar_month(month):
     date = Arrow.fromdate(datetime.strptime(month, "%Y-%m"))
     previous = date.shift(months=-1).format("YYYY-MM")
