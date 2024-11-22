@@ -20,3 +20,8 @@ def arrow(value, func="humanize", arg=None) -> str:
     if arg:
         return f(arg)
     return f()
+
+
+@app.template_filter("repr")
+def repr_(value) -> str:
+    return repr(value)

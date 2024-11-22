@@ -2,7 +2,7 @@ import flask
 from flask_wtf import FlaskForm
 from wtforms import EmailField, StringField
 
-from app import app, private
+from app import app, private, routes
 from app.db import Visitor
 
 
@@ -43,6 +43,11 @@ def visitor_edit(id):
         flask.flash(f"Profil du visiteur {visitor} enregistré")
 
     return flask.redirect(".visitors")
+
+
+@private.route("/visitors/<int:id>/delete/")
+def visitor_delete(id):
+    return routes.create_delete_response(Visitor, ".visitors", id=id)
 
 
 @private.route("/visitors/new/")

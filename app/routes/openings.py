@@ -3,20 +3,18 @@ import typing as t
 import flask
 from pydantic import BaseModel, Field
 
-from app import app, private
+from app import app, private, routes
 from app.db import Opening, Visit, Visitor
 
 
-@private.post("/openings/<id>/delete")
+@private.route("/openings/<id>/delete/")
 def opening_delete(id):
     with app.session() as s:
         opening = s.query(Opening).get(id)
         month = opening.start.strftime("%Y-%m")
         day = opening.start.strftime("%d")
-        s.delete(opening)
-        s.commit()
-        flask.flash(f"L'ouverture du {opening.start} a été supprimée.")
-    return app.redirect(".calendar_day", month=month, day=day)
+        back = flask.url_for(".calendar_day", month=month, day=day)
+    return routes.create_delete_response(Opening, back, id=id)
 
 
 class OpeningVisitorModel(BaseModel):

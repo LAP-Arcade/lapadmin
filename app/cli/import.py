@@ -72,6 +72,10 @@ class SheetVisitor(BaseModel):
 
 @import_.command()
 def visitors():
+    if not gsheet.is_ready:
+        print("Google Sheets module is not ready")
+        return
+
     from app.db import Visitor
 
     created = []

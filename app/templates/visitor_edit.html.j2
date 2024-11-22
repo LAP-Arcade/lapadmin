@@ -33,6 +33,10 @@
         <button class="btn waves-effect waves-light" type="submit" name="action">Enregistrer
             <i class="material-icons right">send</i>
         </button>
+
+        <a href="{{ url_for('.visitor_delete', id=visitor.id) }}" class="btn waves-effect waves-light red darken-1">Supprimer
+            <i class="material-icons right">delete</i>
+        </a>
     </form>
 </div>
 {% endblock content %}

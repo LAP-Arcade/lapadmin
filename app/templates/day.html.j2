@@ -43,11 +43,9 @@
             <span class="badge">{{ opening.scope }}</span>
         </div>
         <div class="actions">
-            <form action="{{ url_for('.opening_delete', id=opening.id) }}" method="post">
-                <button class="btn waves-effect waves-light red" type="submit">
-                    <i class="material-icons">delete</i>
-                </button>
-            </form>
+            <a class="btn waves-effect waves-light red" href="{{ url_for('.opening_delete', id=opening.id) }}">
+                <i class="material-icons">delete</i>
+            </a>
         </div>
     </header>
     <main>

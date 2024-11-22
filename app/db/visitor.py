@@ -33,6 +33,3 @@ class Visitor(Table, Id):
                 return self.nick
             name += f' "{self.nick}"'
         return name or "Empty"
-
-    def __repr__(self):
-        return f"<Visitor {self}>"

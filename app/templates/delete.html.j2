@@ -1,0 +1,27 @@
+{% extends "base.html.j2" %}
+
+{% block content %}
+
+<div class="container">
+    <h1>Confirmation de suppression</h1>
+
+    <form method="post" action="." class="widget">
+        {{ form.hidden_tag() }}
+        <p>
+            Vous êtes sur le point de supprimer l'entité
+            <code>{{ entity | repr | e }}</code>.
+        </p>
+        <p>Êtes-vous sûr ?</p>
+        <button class="btn waves-effect waves-light red darken-1" type="submit" name="action">Supprimer
+            <i class="material-icons right">delete</i>
+        </button>
+
+        <p>
+            <a href="{{ back }}">
+                <i class="material-icons">arrow_back</i>
+                Retour
+            </a>
+        </p>
+    </form>
+</div>
+{% endblock content %}

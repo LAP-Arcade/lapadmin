@@ -21,6 +21,11 @@ class Opening(Table, Id):
     end: Column[datetime.datetime]
     scope: Column[Scope] = column(default=Scope.PUBLIC)
 
+    def __str__(self):
+        hour_start = self.start.strftime("%H:%M")
+        hour_end = self.end.strftime("%H:%M")
+        return f"#{self.id} {self.month}-{self.day} {hour_start} - {hour_end}"
+
     @property
     def month(self):
         return self.start.strftime("%Y-%m")

@@ -62,6 +62,13 @@ class Table(DeclarativeBase):
         }
     )
 
+    def __str__(self):
+        primary_keys = [c.name for c in self.__table__.columns if c.primary_key]
+        return " ".join(f"{key}={getattr(self, key)}" for key in primary_keys)
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} {self}>"
+
     @orm.declared_attr
     def __tablename__(cls):
         result = humps.decamelize(cls.__name__)
