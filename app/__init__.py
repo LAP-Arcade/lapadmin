@@ -5,6 +5,7 @@ import flask
 import werkzeug.utils
 from arrow import Arrow
 from flask import Blueprint, Flask
+from flask.sansio.scaffold import Scaffold
 from pydantic import BaseModel
 
 ROOT_DIR = Path(__file__).parent.resolve()
@@ -51,7 +52,7 @@ class App(Flask):
         and POST methods, useful for form-based routes.
         """
         options.setdefault("methods", ("GET", "POST"))
-        return super().route(rule, **options)
+        return Scaffold.route(self, rule, **options)
 
     def session(self, **kwargs):
         return db.session(**kwargs)
@@ -65,6 +66,11 @@ class App(Flask):
         return super().make_response(return_value)
 
 
+class Blueprint(Blueprint):
+    def route(self, *args, **kwargs):
+        return App.route(self, *args, **kwargs)
+
+
 app = App()
 private = Blueprint("private", __name__)
 
@@ -75,7 +81,8 @@ auto_import.auto_import("filters")
 app.register_blueprint(private)
 
 
-def create_app():
+def create_app(debug=False):
+    app.debug = app.debug or debug
 
     if app.debug:
         VAR_DIR.mkdir(exist_ok=True)
