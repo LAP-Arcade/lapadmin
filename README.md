@@ -11,6 +11,9 @@ Production: https://admin.lelap.in
   credentials JSON file placed in `keys/google.json`, see [package
   documentation](https://docs.gspread.org/en/v6.1.3/oauth2.html#for-bots-using-service-account)
   for instructions
+- **(Only to force Discord login for private routes)** A Discord client ID and
+  token filled as `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` in
+  `config.yml`
 
 ## Running
 

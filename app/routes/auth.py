@@ -1,11 +1,16 @@
 from flask import request
 
 from app import app, private
-from app.db import AuthToken
+from app.db import AuthToken, Staff
 
 
 @private.before_request
 def check_login():
+    if not app.config.get("DISCORD_CLIENT_ID"):
+        with app.session() as s:
+            staff = s.query(Staff).first()
+            request.user = staff
+        return
     cookie = request.cookies.get("auth")
     redirect = app.redirect("login")
     request.user = None

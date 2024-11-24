@@ -15,7 +15,7 @@ class Config:
             with PATH.open("w") as f:
                 yaml.safe_dump(
                     {
-                        "DISCORD_CLIENT_ID": "123123",
+                        "DISCORD_CLIENT_ID": False,
                         "DISCORD_CLIENT_SECRET": "xxxx",
                     },
                     f,
