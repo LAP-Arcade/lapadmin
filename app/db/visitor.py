@@ -26,6 +26,12 @@ class Visitor(Table, Id):
     def is_incomplete(self):
         return not bool(self.first_name or self.last_name or self.email)
 
+    def __gt__(self, other):
+        def key(visitor):
+            return (visitor.nick or visitor.full_name or visitor.email).lower()
+
+        return key(self) > key(other)
+
     def __str__(self):
         name = self.full_name or self.email.split("@")[0]
         if self.nick:

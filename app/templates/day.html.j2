@@ -25,6 +25,22 @@
 .visit.started .mark-finished {
     display: initial;
 }
+
+.visit input {
+    height: initial;
+    width: 5em;
+    border: 1px solid gray;
+    font-size: 0.9em;
+}
+
+.visit .logs {
+    font-size: 0.8em;
+    color: gray;
+}
+
+.visit .mark-now .material-icons {
+    font-size: 1.3em;
+}
 </style>
 {% endblock %}
 
@@ -61,7 +77,7 @@
             </div>
         </div>
         <ul class="collection">
-            {% for visit in opening.visits %}
+            {% for visit in opening.visits | sort(attribute='visitor') %}
             {% with visitor = visit.visitor %}
             <li
                 class="
@@ -84,17 +100,32 @@
                     Impayé
                 </span>
                 {% endif %}
+                <span class="logs">
+                </span>
                 <span class="right actions">
-                    <a class="mark-started">
-                        <i class="material-icons">play_arrow</i>
-                    </a>
-                    <a class="mark-paused">
-                        <i class="material-icons">pause</i>
-                    </a>
-                    <a class="mark-finished">
-                        <i class="material-icons">stop</i>
-                    </a>
-                    <a class="delete">
+                    <span class="entry-actions">
+                        <input
+                            class="entry-time"
+                            {% if visit.entry %}
+                            value="{{ visit.entry.hour }}:{{ visit.entry.minute }}"
+                            {% endif %}
+                        >
+                        <a class="mark-now">
+                            <i class="material-icons">timer</i>
+                        </a>
+                    </span>
+                    -
+                    <span class="exit-actions">
+                        <input
+                            class="exit-time"
+                            {% if visit.exit %}
+                            value="{{ visit.exit.hour }}:{{ visit.exit.minute }}"
+                            {% endif %}
+                        >
+                        <a class="mark-now">
+                            <i class="material-icons">timer</i>
+                        </a>
+                    </span>                    <a class="delete">
                         <i class="material-icons">delete</i>
                     </a>
                 </span>
@@ -213,19 +244,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (const visitContainer of openingContainer.querySelectorAll('.visit')) {
             const visitorId = visitContainer.dataset.visitorId;
-            const startButton = visitContainer.querySelector('.mark-started');
-            const finishButton = visitContainer.querySelector('.mark-finished');
             const deleteButton = visitContainer.querySelector('.delete');
-
-            startButton.addEventListener('click', async () => {
-                visitContainer.classList.add('started');
-                visitContainer.classList.remove('finished');
-            });
-
-            finishButton.addEventListener('click', async () => {
-                visitContainer.classList.remove('started');
-                visitContainer.classList.add('finished');
-            });
+            const logsContainer = visitContainer.querySelector('.logs');
 
             deleteButton.addEventListener('click', async () => {
                 const result = await fetch(`/api/openings/${openingId}/visitors/${visitorId}`, {
@@ -237,6 +257,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 visitContainer.remove();
             });
+
+            for (const field of ['entry', 'exit']) {
+                const timeInput = visitContainer.querySelector(`.${field}-time`);
+                const markNow = visitContainer.querySelector(`.${field}-actions .mark-now`);
+
+                async function update() {
+                    console.log(`Updating ${field} time for visitor ${visitorId}`);
+                    const result = await fetch(`/api/openings/${openingId}/visitors/${visitorId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ [field]: timeInput.value }),
+                    });
+                    if (!result.ok) {
+                        console.error('Failed to update visitor');
+                        logsContainer.innerHTML = '<span style="color: red;">Erreur</span>';
+                    } else {
+                        logsContainer.textContent = 'Enregistré';
+                    }
+                    setTimeout(() => {
+                        logsContainer.innerHTML = '';
+                    }, 2000);
+                }
+
+                markNow.addEventListener('click', async () => {
+                    const now = new Date();
+                    const hours = now.getHours().toString().padStart(2, '0');
+                    const minutes = now.getMinutes().toString().padStart(2, '0');
+                    timeInput.value = `${hours}:${minutes}`;
+
+                    update();
+                });
+
+                timeInput.addEventListener('change', update);
+                timeInput.addEventListener('blur', update);
+            }
         }
     }
 });

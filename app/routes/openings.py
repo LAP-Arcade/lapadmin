@@ -1,3 +1,4 @@
+import datetime
 import typing as t
 
 import flask
@@ -40,4 +41,28 @@ def delete_visit(opening_id, visitor_id):
             {"opening_id": opening_id, "visitor_id": visitor_id}
         )
         s.delete(visit)
+        s.commit()
+
+
+@private.patch("/api/openings/<opening_id>/visitors/<visitor_id>")
+def update_visit(opening_id, visitor_id):
+    with app.session() as s:
+        visit = s.query(Visit).get(
+            {"opening_id": opening_id, "visitor_id": visitor_id}
+        )
+        for key in ("entry", "exit"):
+            if key not in flask.request.json:
+                continue
+            value = flask.request.json.get(key)
+            if not value:
+                continue
+            print(value)
+            # format = HH:MM
+            hour, minute = value.split(":")
+            value = visit.opening.start.replace(
+                hour=int(hour), minute=int(minute)
+            )
+            if value < (visit.opening.start - datetime.timedelta(hours=2)):
+                value = value + datetime.timedelta(days=1)
+            setattr(visit, key, value)
         s.commit()
