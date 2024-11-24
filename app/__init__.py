@@ -8,11 +8,13 @@ from flask import Blueprint, Flask
 from flask.sansio.scaffold import Scaffold
 from pydantic import BaseModel
 
+# These need to be defined before importing other modules otherwise they'll
+# cause circular imports.
 ROOT_DIR = Path(__file__).parent.resolve()
 VAR_DIR = Path("var").resolve()
 
 from app import auto_import, db  # noqa: E402
-from app.config import Config
+from app.config import Config  # noqa: E402
 
 
 class App(Flask):
