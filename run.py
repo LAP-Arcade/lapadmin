@@ -3,11 +3,11 @@ import sys
 from pathlib import Path
 
 try:
-    import flask
-except ModuleNotFoundError:
+    import app
+except ModuleNotFoundError as e:
     import os
 
-    print("Flask is not detected, creating venv and swapping process...")
+    print(f"{e}, creating venv and swapping process...")
 
     subprocess.check_call([sys.executable, "-m", "venv", ".venv"])
     if sys.platform == "win32":
