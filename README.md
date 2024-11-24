@@ -17,7 +17,7 @@ Production: https://admin.lelap.in
 
 ## Running
 
-### Development
+### Running locally for development
 
 Using the helper script:
 
@@ -37,6 +37,7 @@ python -m venv .venv
 source .venv/bin/activate
 # Windows
 .\.venv\Scripts\activate.bat
+
 pip install -r requirements.txt
 
 # Optional: import visitors from old gsheet data
@@ -47,6 +48,29 @@ FLASK_APP=app:create_app flask run --debug [-p PORT]
 # Windows
 set FLASK_APP=app:create_app
 flask run --debug [-p PORT]
+```
+
+You can now explore the app at http://localhost:5000.
+
+In debug mode, the database is automatically created, but if you modify the
+tables, you'll have to create a new migration. Use `flask db migration` to check
+what changed, and use `flask db migraiton [your message]` to create the new
+migration. Then restart the app to apply it, or run `alembic upgrade head`.
+
+### Running in production
+
+Run database migrations, then serve `app:create_app()` with a WSGI compatible
+server.
+
+Real-world example, with gunicorn:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+alembic upgrade head
+pip install gunicorn
+gunicorn 'app:create_app()' -b 127.0.0.1:5000 -w 4
 ```
 
 ## License
