@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 try:
-    import app
+    import app as _
 except ModuleNotFoundError as e:
     import os
 
