@@ -52,6 +52,9 @@ class App(Flask):
         and POST methods, useful for form-based routes.
         """
         options.setdefault("methods", ("GET", "POST"))
+        # We can't use super() here because it will fail if we use this method
+        # from a Blueprint. Resolving the class here allows us to call this
+        # method from both the App and Blueprint classes.
         return Scaffold.route(self, rule, **options)
 
     def session(self, **kwargs):
