@@ -28,7 +28,7 @@ python run.py
 This take care of creating a virtual environment for you, and runs the app on
 port 5000 by default, which you can override with `python run.py --port <PORT>`.
 
-Manually:
+Or instead, do it all manually:
 
 ```bash
 python -m venv .venv
