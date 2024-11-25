@@ -1,0 +1,10 @@
+- name: FeliCa générique
+  price: 5
+  revshare: 50%
+  holder: msn
+
+- name: eAMUSEMENT Pass
+  price: 6
+
+- name: SEGA Aime
+  price: 6

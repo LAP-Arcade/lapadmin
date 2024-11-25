@@ -6,7 +6,7 @@ from wtforms import SelectField, StringField
 from wtforms.validators import DataRequired
 
 from app import app, private
-from app.db import Opening, Visitor
+from app.db import Opening, visitor
 
 
 def get_translated_scopes() -> dict[str, str]:
@@ -62,11 +62,10 @@ def calendar_day(month, day):
 
     form.end_date.data = form.end_date.data or date
 
-    with app.session() as s:
-        visitors = [
-            f"{v} (#{v.id})"
-            for v in sorted(s.query(Visitor), key=lambda x: str(x).lower())
-        ]
     return app.render(
-        "day", form=form, openings=openings, date=date, visitors=visitors
+        "day",
+        form=form,
+        openings=openings,
+        date=date,
+        visitors=visitor.get_input_list(),
     )

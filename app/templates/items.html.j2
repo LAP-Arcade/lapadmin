@@ -1,0 +1,48 @@
+{% extends "base.html.j2" %}
+{% block styles %}
+<style>
+</style>
+{% endblock styles %}
+
+{% block content %}
+<div class="container">
+    <h1>Items</h1>
+
+    <p>
+        Modifier : <a href="https://github.com/LAP-Arcade/lapadmin/tree/main/data/items">@repo/data/items/</a>
+    </p>
+
+    <div class="row">
+        {% for item in items %}
+        <div class="col s12 m6">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        {{ item }}
+                        {% if item.type != 'item' %}
+                        <span class="badge">{{ item.type }}</span>
+                        {% endif %}
+                    </span>
+                    <p>
+                        {{ item.price }} €
+                        {% if item.max %}
+                        (max {{ item.max }} €)
+                        {% endif %}
+                    </p>
+                    {% if item.revshare %}
+                    <p>Part : {{ item.revshare }} à {{ item.holder }}</p>
+                    {% endif %}
+                    {% if item.discounts %}
+                    <p>
+                        {% for id, amount in item.discounts.items() %}
+                        <p>{{ amount }} sur {{ id }}</p>
+                        {% endfor %}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock content %}

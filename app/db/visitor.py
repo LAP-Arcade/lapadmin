@@ -39,3 +39,13 @@ class Visitor(Table, Id):
                 return self.nick
             name += f' "{self.nick}"'
         return name or "Empty"
+
+
+def get_input_list():
+    from app import app
+
+    with app.session() as s:
+        return [
+            f"{v} (#{v.id})"
+            for v in sorted(s.query(Visitor), key=lambda x: str(x).lower())
+        ]

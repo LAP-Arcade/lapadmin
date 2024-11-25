@@ -12,6 +12,7 @@ from pydantic import BaseModel
 # cause circular imports.
 ROOT_DIR = Path(__file__).parent.resolve()
 VAR_DIR = Path("var").resolve()
+DATA_DIR = Path("data").resolve()
 
 from app import auto_import, db  # noqa: E402
 from app.config import Config  # noqa: E402
@@ -95,8 +96,8 @@ def create_app(debug=False):
 
         db.create_all()
 
-    from app import data
+    from app import staffs
 
-    data.reset_staffs()
+    staffs.reset()
 
     return app

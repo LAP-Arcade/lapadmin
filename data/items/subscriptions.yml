@@ -1,0 +1,11 @@
+- name: 50% off
+  price: 40
+  type: subscription
+  discounts:
+    lap2: 50%
+
+- name: 1 month
+  price: 80
+  type: subscription
+  discounts:
+    lap2: 100%

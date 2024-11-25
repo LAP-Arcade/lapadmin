@@ -1,0 +1,7 @@
+- name: Sticker
+  price: 3
+  revshare: 50%
+
+- name: Pin
+  price: 8
+  revshare: 50%

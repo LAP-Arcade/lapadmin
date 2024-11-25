@@ -28,7 +28,7 @@
 
 .visit input {
     height: initial;
-    width: 5em;
+    width: 4em;
     border: 1px solid gray;
     font-size: 0.9em;
 }
@@ -103,11 +103,14 @@
                 <span class="logs">
                 </span>
                 <span class="right actions">
+                    <a class="pay" href="{{ url_for('.pay') }}?visitor={{ visitor.id }}&visit={{ visit.id }}">
+                        <i class="material-icons">attach_money</i>
+                    </a>
                     <span class="entry-actions">
                         <input
                             class="entry-time"
                             {% if visit.entry %}
-                            value="{{ visit.entry.hour }}:{{ visit.entry.minute }}"
+                            value="{{ '%02d' % visit.entry.hour }}:{{ '%02d' % visit.entry.minute }}"
                             {% endif %}
                         >
                         <a class="mark-now">
@@ -119,7 +122,7 @@
                         <input
                             class="exit-time"
                             {% if visit.exit %}
-                            value="{{ visit.exit.hour }}:{{ visit.exit.minute }}"
+                            value="{{ '%02d' % visit.exit.hour }}:{{ '%02d' % visit.exit.minute }}"
                             {% endif %}
                         >
                         <a class="mark-now">

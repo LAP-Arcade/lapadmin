@@ -1,0 +1,11 @@
+- name: Entrée LAP 2.0
+  id: lap2
+  price: 3
+  billing: hourly
+  max: 12
+
+- name: Entrée LAP 1.0 semaine
+  price: 5
+
+- name: Entrée LAP 1.0 week-end
+  price: 8

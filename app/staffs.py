@@ -3,7 +3,7 @@ from pathlib import Path
 
 import yaml
 
-from app import app
+from app import DATA_DIR, app
 from app.db import Staff
 
 
@@ -13,8 +13,8 @@ class StaffEntry:
     discord_id: str
 
 
-def reset_staffs():
-    with (Path("data") / "staffs.yml").open() as f:
+def reset():
+    with (DATA_DIR / "staffs.yml").open() as f:
         staffs = [
             StaffEntry(name, discord_id)
             for name, discord_id in yaml.safe_load(f).items()

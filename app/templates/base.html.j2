@@ -66,6 +66,13 @@
             margin: 1em auto;
         }
 
+        .box {
+            padding: 1em;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 1em;
+        }
+
         .flash-close {
             float: right;
             cursor: pointer;
@@ -81,6 +88,7 @@
                 <li><a href="{{ url_for('.calendar_redirect') }}">Calendrier</a></li>
                 <li><a href="{{ url_for('.calendar_day', month=now.format('YYYY-MM'), day=now.format('DD')) }}">Aujourd'hui</a></li>
                 <li><a href="{{ url_for('.visitors') }}">Visiteurs</a></li>
+                <li><a href="{{ url_for('.inventory') }}">Items</a></li>
             </ul>
         </div>
     </nav>
