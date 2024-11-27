@@ -1,2 +1,4 @@
 /var
 /config.yml
+/.venv
+__pycache__/
