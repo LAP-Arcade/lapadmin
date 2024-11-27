@@ -1,0 +1,12 @@
+{
+    "recommendations": [
+        "chrislajoie.vscode-modelines",
+        "ms-python.black-formatter",
+        "ms-python.flake8",
+        "ms-python.isort",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "samuelcolvin.jinjahtml",
+        "wholroyd.jinja",
+    ]
+}

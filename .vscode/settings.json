@@ -1,0 +1,9 @@
+{
+    "black-formatter.args": [
+        "--line-length=80"
+    ],
+    "isort.args": [
+        "--profile=black"
+    ],
+    "python.languageServer": "Pylance",
+}
