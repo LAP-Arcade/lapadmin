@@ -73,5 +73,13 @@ def get_by_id(id):
     return None
 
 
+@functools.cache
+def get_by_string(x):
+    for item in get_all():
+        if str(item) == x:
+            return item
+    return None
+
+
 def get_input_list():
     return [str(i) for i in sorted(get_all(), key=lambda x: str(x).lower())]

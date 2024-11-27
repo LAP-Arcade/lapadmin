@@ -1,3 +1,4 @@
+import dataclasses
 import secrets
 from pathlib import Path
 
@@ -69,6 +70,8 @@ class App(Flask):
             return flask.jsonify(return_value.model_dump())
         if return_value is None:
             return flask.Response(status=204)
+        if dataclasses.is_dataclass(return_value):
+            return flask.jsonify(dataclasses.asdict(return_value))
         return super().make_response(return_value)
 
 

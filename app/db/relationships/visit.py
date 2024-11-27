@@ -24,6 +24,10 @@ class Visit(Table):
         return self.exit is not None
 
     @property
+    def duration(self) -> datetime.timedelta:
+        return self.exit - self.entry
+
+    @property
     def paid(self) -> bool:
         # TODO fetch relationship payment with item type entry
         return False

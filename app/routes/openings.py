@@ -2,6 +2,7 @@ import datetime
 import typing as t
 
 import flask
+from flask import Response
 from pydantic import BaseModel, Field
 
 from app import app, private, routes
@@ -44,6 +45,19 @@ def delete_visit(opening_id, visitor_id):
         s.commit()
 
 
+@private.get("/api/openings/<opening_id>/visitors/<visitor_id>")
+def get_visit(opening_id, visitor_id):
+    with app.session() as s:
+        visit = s.query(Visit).get(
+            {"opening_id": opening_id, "visitor_id": visitor_id}
+        )
+        if not visit:
+            return Response(status=404)
+        return {
+            "duration": f"{visit.duration.seconds // 3600}h{visit.duration.seconds // 60 % 60}",
+        }
+
+
 @private.patch("/api/openings/<opening_id>/visitors/<visitor_id>")
 def update_visit(opening_id, visitor_id):
     with app.session() as s:
@@ -56,8 +70,6 @@ def update_visit(opening_id, visitor_id):
             value = flask.request.json.get(key)
             if not value:
                 continue
-            print(value)
-            # format = HH:MM
             hour, minute = value.split(":")
             value = visit.opening.start.replace(
                 hour=int(hour), minute=int(minute)

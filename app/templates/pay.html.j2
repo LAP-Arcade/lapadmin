@@ -11,39 +11,36 @@
         {{ form.hidden_tag() }}
 
         <div class="row">
-            <div class="input-field col s12">
+            <div class="input-field col s6">
                 <input type="text" class="autocomplete visitors-input" name="visitor-text">
                 <label>Payeur</label>
             </div>
-        </div>
-        <div class="row">
-            <div class="input-field col s8">
+            <div class="input-field col s5">
                 <label>Item</label>
                 <input type="text" class="autocomplete items-input" name="item-text">
             </div>
-            <div class="input-field col s4">
+            <div class="input-field col s1">
+                <input type="text" name="duration" placeholder="5h12">
                 <label>Durée</label>
-                <input type="number" placeholder="5h12">
             </div>
         </div>
         <div class="row">
-            <div class="input-field col s4">
+            <div class="input-field col s3">
                 {{ form.amount }}
-                <label>Montant</label>
+                <label>Montant (€)</label>
+                <p class="discount"></p>
             </div>
-            <div class="input-field col s4">
+            <div class="input-field col s2">
                 <label>
                     <input type="checkbox">
                     <span>Forcer un montant</span>
                 </label>
             </div>
-            <div class="input-field col s4">
+            <div class="input-field col s2">
                 {{ form.method }}
                 <label>Méthode</label>
             </div>
-        </div>
-        <div class="row">
-            <div class="input-field col s12">
+            <div class="input-field col s5">
                 <label>Notes</label>
                 {{ form.notes }}
             </div>
@@ -71,16 +68,81 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const urlParams = new URLSearchParams(window.location.search);
     const visitorId = urlParams.get('visitor');
+    const openingId = urlParams.get('opening');
+    const visitorInput = document.querySelector('.visitors-input');
+    const durationInput = document.querySelector('input[name="duration"]');
+    const itemInput = document.querySelector('input[name="item-text"]');
+    const amountInput = document.querySelector('input[name="amount"]');
+    const discountElement = document.querySelector('.discount');
+
     if (visitorId) {
-        console.log('visitorId', visitorId);
         const visitor = visitors.find(v => v.match(/\(#(\d+)\)$/).pop() === visitorId);
-        console.log('visitor', visitor);
         if (visitor) {
-            const visitorInput = document.querySelector('.visitors-input');
             visitorInput.value = visitor;
             visitorInput.dispatchEvent(new Event('focus'));
         }
     }
+
+    if (openingId) {
+        const item = items.find(i => i.match(/\(#{{ config.DEFAULT_ENTRY }}\)$/));
+        if (item) {
+            itemInput.value = item;
+            itemInput.dispatchEvent(new Event('focus'));
+        }
+    }
+
+    if (visitorId && openingId) {
+        fetchDuration();
+    }
+
+    async function fetchDuration() {
+        if (!openingId)
+            return;
+        const visitor = visitorInput.value;
+        if (!visitor)
+            return;
+        const visitorInputId = visitor.match(/\(#(\d+)\)$/).pop();
+        if (!visitorInputId)
+            return;
+        const response = await fetch(`/api/openings/${openingId}/visitors/${visitorInputId}`);
+        if (!response.ok) {
+            console.error('Failed to fetch duration', response);
+            return;
+        }
+        const data = await response.json();
+        durationInput.value = data.duration;
+        durationInput.dispatchEvent(new Event('focus'));
+        fetchPrice();
+    }
+
+    visitorInput.addEventListener('change', fetchDuration);
+    visitorInput.addEventListener('blur', fetchDuration);
+
+    async function fetchPrice() {
+        if (!itemInput.value)
+            return;
+        const response = await fetch(`/api/pay/?item=${itemInput.value}&duration=${durationInput.value}&visitor=${visitorId}`.replace(/#/g, '%23'));
+        if (!response.ok) {
+            console.error('Failed to fetch price', response);
+            return;
+        }
+        const data = await response.json();
+        amountInput.value = data.price;
+        amountInput.dispatchEvent(new Event('focus'));
+        if (data.discount) {
+            discountElement.textContent = data.discount;
+        } else {
+            discountElement.textContent = '';
+        }
+    }
+
+    visitorInput.addEventListener('change', fetchPrice);
+    visitorInput.addEventListener('blur', fetchPrice);
+    itemInput.addEventListener('change', fetchPrice);
+    itemInput.addEventListener('blur', fetchPrice);
+    durationInput.addEventListener('change', fetchPrice);
+    durationInput.addEventListener('keyup', fetchPrice);
+    durationInput.addEventListener('blur', fetchPrice);
 });
 </script>
 {% endblock scripts %}
