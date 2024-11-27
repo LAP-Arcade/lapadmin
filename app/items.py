@@ -21,7 +21,7 @@ class ItemEntry:
         SUBSCRIPTION = enum.auto()
 
     name: str
-    price: int
+    price: float = 0.0
     id: str = None
     type: Type = Type.ITEM
     max: int = None
@@ -35,7 +35,7 @@ class ItemEntry:
         if self.type == self.Type.MERCH:
             result += f" ({self.holder})"
         if self.id:
-            result += f" ({self.id})"
+            result += f" (#{self.id})"
         return result
 
     def __post_init__(self):
@@ -71,3 +71,7 @@ def get_by_id(id):
         if item.id == id:
             return item
     return None
+
+
+def get_input_list():
+    return [str(i) for i in sorted(get_all(), key=lambda x: str(x).lower())]

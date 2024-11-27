@@ -3,7 +3,11 @@
 {% block content %}
 
 <div class="container">
+    {% if title %}
+    <h1>{{ title }}</h1>
+    {% elif visitor %}
     <h1>Éditer <small>{{ visitor }}</small></h1>
+    {% endif %}
 
     {% include "_form_errors.html.j2" %}
 
@@ -34,9 +38,11 @@
             <i class="material-icons right">send</i>
         </button>
 
+        {% if visitor %}
         <a href="{{ url_for('.visitor_delete', id=visitor.id) }}" class="btn waves-effect waves-light red darken-1">Supprimer
             <i class="material-icons right">delete</i>
         </a>
+        {% endif %}
     </form>
 </div>
 {% endblock content %}

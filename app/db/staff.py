@@ -4,6 +4,7 @@ from . import Column, Id, Table, column, relation
 
 if TYPE_CHECKING:
     from .auth_token import AuthToken
+    from .payment import Payment
 
 
 class Staff(Table, Id):
@@ -12,4 +13,7 @@ class Staff(Table, Id):
 
     tokens: Column[list["AuthToken"]] = relation(
         "AuthToken", back_populates="staff"
+    )
+    payments: Column[list["Payment"]] = relation(
+        "Payment", back_populates="staff"
     )

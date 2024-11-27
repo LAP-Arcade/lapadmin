@@ -1,0 +1,86 @@
+{% extends "base.html.j2" %}
+
+{% block content %}
+
+<div class="container">
+    <h1>Paiement</h1>
+
+    {% include "_form_errors.html.j2" %}
+
+    <form action="." method="post" class="widget">
+        {{ form.hidden_tag() }}
+
+        <div class="row">
+            <div class="input-field col s12">
+                <input type="text" class="autocomplete visitors-input" name="visitor-text">
+                <label>Payeur</label>
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s8">
+                <label>Item</label>
+                <input type="text" class="autocomplete items-input" name="item-text">
+            </div>
+            <div class="input-field col s4">
+                <label>Durée</label>
+                <input type="number" placeholder="5h12">
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s4">
+                {{ form.amount }}
+                <label>Montant</label>
+            </div>
+            <div class="input-field col s4">
+                <label>
+                    <input type="checkbox">
+                    <span>Forcer un montant</span>
+                </label>
+            </div>
+            <div class="input-field col s4">
+                {{ form.method }}
+                <label>Méthode</label>
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s12">
+                <label>Notes</label>
+                {{ form.notes }}
+            </div>
+        </div>
+        <p>
+            <button class="btn waves-effect waves-light" type="submit">
+                <i class="material-icons">done</i>
+                Enregistrer le paiement
+            </button>
+        </p>
+    </form>
+</div>
+
+{% endblock content %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    {% with name='visitors', data=visitors %}
+    {% include "_autocomplete.js.j2" %}
+    {% endwith %}
+    {% with name='items', data=items %}
+    {% include "_autocomplete.js.j2" %}
+    {% endwith %}
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const visitorId = urlParams.get('visitor');
+    if (visitorId) {
+        console.log('visitorId', visitorId);
+        const visitor = visitors.find(v => v.match(/\(#(\d+)\)$/).pop() === visitorId);
+        console.log('visitor', visitor);
+        if (visitor) {
+            const visitorInput = document.querySelector('.visitors-input');
+            visitorInput.value = visitor;
+            visitorInput.dispatchEvent(new Event('focus'));
+        }
+    }
+});
+</script>
+{% endblock scripts %}

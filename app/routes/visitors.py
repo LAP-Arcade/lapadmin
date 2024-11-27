@@ -32,7 +32,11 @@ def visitor_edit(id):
     form.process(flask.request.form, obj=visitor)
 
     if not form.validate_on_submit():
-        return app.render("visitor_edit", form=form, visitor=visitor)
+        return app.render(
+            "visitor_edit",
+            form=form,
+            visitor=visitor,
+        )
 
     with app.session() as s:
         visitor.first_name = form.first_name.data
@@ -47,7 +51,9 @@ def visitor_edit(id):
 
 @private.route("/visitors/<int:id>/delete/")
 def visitor_delete(id):
-    return routes.create_delete_response(Visitor, ".visitors", id=id)
+    return routes.create_delete_response(
+        Visitor, flask.url_for(".visitors"), id=id
+    )
 
 
 @private.route("/visitors/new/")
@@ -55,7 +61,7 @@ def visitor_new():
     form = VisitorEditForm()
 
     if not form.validate_on_submit():
-        return app.render("visitor_edit", form=form)
+        return app.render("visitor_edit", form=form, title="Nouveau visiteur")
 
     with app.session() as s:
         visitor = Visitor()
@@ -70,4 +76,4 @@ def visitor_new():
         s.commit()
         flask.flash(f"Profil du visiteur {visitor} enregistré")
 
-    return flask.redirect("visitors")
+    return flask.redirect(".visitors")

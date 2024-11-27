@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from . import Column, Id, Table, column, relation
 
 if TYPE_CHECKING:
-    from . import Visit
+    from . import Payment, Visit
 
 
 class Visitor(Table, Id):
@@ -13,6 +13,9 @@ class Visitor(Table, Id):
     email: Column[str] = column(nullable=True)
 
     visits: Column[list["Visit"]] = relation("Visit", back_populates="visitor")
+    payments: Column[list["Payment"]] = relation(
+        "Payment", back_populates="visitor"
+    )
 
     @property
     def full_name(self):
@@ -21,6 +24,10 @@ class Visitor(Table, Id):
         if not self.last_name:
             return self.first_name
         return f"{self.first_name} {self.last_name}"
+
+    @property
+    def input(self):
+        return f"{self} (#{self.id})"
 
     @property
     def is_incomplete(self):
@@ -46,6 +53,6 @@ def get_input_list():
 
     with app.session() as s:
         return [
-            f"{v} (#{v.id})"
+            v.input
             for v in sorted(s.query(Visitor), key=lambda x: str(x).lower())
         ]

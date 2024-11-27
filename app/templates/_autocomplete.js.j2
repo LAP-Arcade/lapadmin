@@ -1,0 +1,10 @@
+const {{ name }} = {{ data | tojson }};
+for (let el of document.querySelectorAll('.{{ name }}-input')) {
+    M.Autocomplete.init(el, {
+        data: {{ name }}.reduce((acc, x) => {
+            acc[x] = null;
+            return acc;
+        }, {}),
+        minLength: 0,
+    });
+}

@@ -110,6 +110,7 @@ from sqlalchemy.orm import relationship as relation  # noqa: E402 F401
 from .auth_token import AuthToken  # noqa: E402 F401
 from .booking import Booking  # noqa: E402 F401
 from .opening import Opening  # noqa: E402 F401
+from .payment import Payment  # noqa: E402 F401
 from .pricing import Pricing  # noqa: E402 F401
 from .relationships.visit import Visit  # noqa: E402 F401
 from .staff import Staff  # noqa: E402 F401
