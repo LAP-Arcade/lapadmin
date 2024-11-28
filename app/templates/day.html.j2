@@ -49,13 +49,15 @@
     <h1>{{ date | arrow('format', 'D MMM YYYY') }}</h1>
 </div>
 
-{% for opening in openings %}
+{% for (opening, start_offset, end_offset) in openings %}
 <div class="container widget opening" data-opening="{{ opening.id }}">
     <header>
         <div class="title">
-            {{ opening.start | arrow('time') }}
-            -
-            {{ opening.end | arrow('time') }}
+            {{ opening.start | arrow('format', 'HH:mm') }}
+            <sup>{{ start_offset }}</sup>
+            <span>&#8212;</span>
+            {{ opening.end | arrow('format', 'HH:mm') }}
+            <sup>{{ end_offset }}</sup>
             <span class="badge">{{ opening.scope }}</span>
         </div>
         <div class="actions">
@@ -212,6 +214,14 @@ document.addEventListener('DOMContentLoaded', () => {
     {% with name='visitors', data=visitors %}
     {% include "_autocomplete.js.j2" %}
     {% endwith %}
+
+    const end_datepicker = M.Datepicker.getInstance(document.querySelector('[name="end_date"]'));
+    end_datepicker.options.setDefaultDate = true;
+    end_datepicker.options.defaultDate = new Date("{{ form.end_date.data }}");
+    let minDate = new Date("{{ form.start_date.data }}");
+    minDate.setDate(minDate.getDate() - 1);
+    end_datepicker.options.minDate = minDate;
+    end_datepicker.setDate(new Date("{{ form.end_date.data }}"));
 
     for (const openingContainer of document.querySelectorAll('[data-opening]')) {
         const addVisitorButton = openingContainer.querySelector('[name="add-visitor-button"]');

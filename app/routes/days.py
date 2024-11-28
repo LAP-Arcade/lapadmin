@@ -60,7 +60,17 @@ def calendar_day(month, day):
             | ((Opening.end >= date) & (Opening.end <= f"{date} 23:59:59")),
         )
 
-    form.end_date.data = form.end_date.data or date
+    def get_day_info(current: datetime, compare: datetime) -> str:
+        diff = (compare.date() - current.date()).days
+        return f"+{diff}" if diff > 0 else f"{diff}" if diff < 0 else ""
+        
+    date_time = datetime.fromisoformat(f"{date}T00:00:00")
+    # Map to tuples containing the opening, the number of days between the start date and today, and the number of days between the end date and today
+    openings = [(
+            opening,
+            get_day_info(date_time, opening.start),
+            get_day_info(date_time, opening.end)
+        ) for opening in openings]
 
     return app.render(
         "day",
