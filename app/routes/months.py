@@ -18,7 +18,7 @@ def get_calendar_end(month: Arrow) -> Arrow:
 @dataclass
 class Day:
     date: Arrow
-    opening: Opening = None
+    openings: list[Opening] = None
 
     @property
     def is_today(self):
@@ -54,15 +54,21 @@ def calendar_month(month):
         openings = s.query(Opening).filter(
             Opening.start >= start.datetime, Opening.start < end.datetime
         )
-    openings_by_iso = {
-        opening.start.date().isoformat(): opening for opening in openings
-    }
+
+    openings_by_day = {}
+    for opening in openings:
+        for i in range((opening.end - opening.start).days + 1):
+            day = Arrow.fromdate(opening.start).shift(days=i).format("MMDD")
+            openings_by_day.setdefault(day, [])
+            openings_by_day[day].append(opening)
+
     days = []
     for i in range((end - start).days):
         day = start.shift(days=i)
         days.append(
-            Day(date=day, opening=openings_by_iso.get(day.date().isoformat()))
+            Day(date=day, openings=openings_by_day.get(day.format("MMDD")))
         )
+
     return app.render(
         "calendar",
         days=days,

@@ -127,7 +127,7 @@
                         {% if day.is_past %}past{% endif %}
                         {% if day.is_today %}today{% endif %}
                         {% if day.is_weekend %}weekend{% endif %}
-                        {% if day.opening %}opening{% endif %}
+                        {% if day.openings %}opening{% endif %}
                     "
                     href="{{ url_for('.calendar_day', month=day.date.format('YYYY-MM'), day=day.date.format('DD')) }}"
                 >
