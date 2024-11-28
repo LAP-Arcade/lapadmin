@@ -217,11 +217,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const end_datepicker = M.Datepicker.getInstance(document.querySelector('[name="end_date"]'));
     end_datepicker.options.setDefaultDate = true;
-    end_datepicker.options.defaultDate = new Date("{{ form.end_date.data }}");
+    end_datepicker.options.defaultDate = new Date("{{ form.start_date.data }}");
     let minDate = new Date("{{ form.start_date.data }}");
     minDate.setDate(minDate.getDate() - 1);
     end_datepicker.options.minDate = minDate;
-    end_datepicker.setDate(new Date("{{ form.end_date.data }}"));
+    end_datepicker.setDate(new Date("{{ form.start_date.data }}"));
 
     for (const openingContainer of document.querySelectorAll('[data-opening]')) {
         const addVisitorButton = openingContainer.querySelector('[name="add-visitor-button"]');
