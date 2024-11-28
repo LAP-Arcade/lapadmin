@@ -65,7 +65,6 @@ def calendar_day(month, day):
         return f"+{diff}" if diff > 0 else f"{diff}" if diff < 0 else ""
 
     date_time = datetime.fromisoformat(f"{date}T00:00:00")
-    # Map to tuples containing the opening, the number of days between the start date and today, and the number of days between the end date and today
     openings = [
         (
             opening,
@@ -74,6 +73,8 @@ def calendar_day(month, day):
         )
         for opening in openings
     ]
+
+    form.end_date.data = form.end_date.data or date
 
     return app.render(
         "day",
