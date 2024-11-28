@@ -81,9 +81,9 @@ def get_price():
         hours = hours or 0
         minutes = minutes or 0
         hours, minutes = int(hours), int(minutes)
-        if minutes > 45:
+        if minutes > 40:
             minutes = 60
-        elif minutes > 15:
+        elif minutes > 10:
             minutes = 30
         half_hours = int(hours * 2 + (minutes / 30))
         price = (item.price * half_hours) / 2
