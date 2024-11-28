@@ -56,8 +56,8 @@ def calendar_day(month, day):
 
     with app.session() as s:
         openings = s.query(Opening).filter(
-            Opening.start >= date,
-            Opening.end <= f"{date} 23:59:59",
+            ((Opening.start >= date) & (Opening.start <= f"{date} 23:59:59"))
+            | ((Opening.end >= date) & (Opening.end <= f"{date} 23:59:59")),
         )
 
     form.end_date.data = form.end_date.data or date
