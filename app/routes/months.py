@@ -57,7 +57,7 @@ def calendar_month(month):
 
     openings_by_day = {}
     for opening in openings:
-        for i in range((opening.end - opening.start).days + 1):
+        for i in range((opening.end.date() - opening.start.date()).days + 1):
             day = Arrow.fromdate(opening.start).shift(days=i).format("MMDD")
             openings_by_day.setdefault(day, [])
             openings_by_day[day].append(opening)
