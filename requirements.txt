@@ -9,3 +9,4 @@ pyhumps
 pyyaml
 SQLAlchemy
 unidecode
+google-api-python-client
