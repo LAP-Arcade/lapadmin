@@ -36,7 +36,7 @@ app = create_app(debug=True)
 with app.session() as s:
     if not s.query(Visitor).count():
         print("Visitor table is empty, importing visitors from gsheet...")
-        subprocess.run(
-            [Path(sys.executable).parent / "flask", "import", "visitors"]
-        )
+        # subprocess.run(
+        #     [Path(sys.executable).parent / "flask", "import", "visitors"]
+        # )
 app.run(host=args.host, port=args.port)
