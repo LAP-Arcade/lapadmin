@@ -7,6 +7,6 @@ gspread
 Pydantic
 pyhumps
 pyyaml
-SQLAlchemy
+SQLAlchemy>=2.0
 unidecode
 google-api-python-client
