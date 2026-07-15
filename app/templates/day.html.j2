@@ -27,13 +27,24 @@
     display: initial;
 }
 
-.visit .pay,
-.visit.paid .pay,
-.visit.unpaid .unpay {
-    display: none;
+.visit .paid-label {
+    font-size: inherit;
+    color: inherit;
+    margin-left: 0.75em;
+    cursor: pointer;
+    white-space: nowrap;
 }
-.visit.has-entry.finished.unpaid .pay {
-    display: initial;
+
+.visit .paid-checkbox {
+    position: static;
+    opacity: 1;
+    pointer-events: auto;
+    appearance: auto;
+    -webkit-appearance: checkbox;
+    width: auto;
+    height: auto;
+    vertical-align: middle;
+    margin-left: 0.4em;
 }
 
 .visit .unpaid-badge {
@@ -43,16 +54,61 @@
     display: initial;
 }
 
+.visit .no-bill-badge {
+    display: none;
+}
+.visit.paid.no-bills .no-bill-badge {
+    display: initial;
+}
+
 .visit .billing-info {
     display: none;
     font-size: 0.85em;
     color: gray;
     margin-top: 0.25em;
+    white-space: nowrap;
 }
 .visit.has-entry.finished .billing-info {
     display: block;
 }
+.visit .billed-amount {
+    width: 3.5em !important;
+    font-size: inherit;
+    display: inline;
+    text-align: right;
+    margin-right: 0.25em;
+    -moz-appearance: textfield;
+}
+.visit .billed-amount::-webkit-inner-spin-button,
+.visit .billed-amount::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+}
+.visit .billed-amount.overridden {
+    color: darkorange;
+}
 
+.visit .note {
+    width: 100%;
+    font-size: 0.85em;
+    resize: vertical;
+    min-height: 2em;
+    border: 1px solid #ccc;
+    padding: 0.2em 0.4em;
+    box-sizing: border-box;
+    margin: 0.5em 0;
+}.visit.note-empty .note {
+    display: none;
+}
+.visit .note-add {
+    display: none;
+    font-size: 0.8em;
+    color: gray;
+    cursor: pointer;
+    margin-top: 0.25em;
+}
+.visit.note-empty .note-add {
+    display: inline;
+}
 .visit input {
     height: initial;
     width: 4em;
@@ -115,31 +171,12 @@
                     {% if visit.paid %}paid{% else %}unpaid{% endif %}
                     {% if visit.entry %}has-entry{% endif %}
                     {% if visit.finished %}finished{% endif %}
+                    {% if not visit.note %}note-empty{% endif %}
+                    {% if not visit.bills %}no-bills{% endif %}
                     "
                 data-visitor-id="{{ visitor.id }}"
             >
-                {% include "_visitor_item.html.j2" %}
-                <a href="{{ url_for('.visitor_edit', id=visitor.id) }}">
-                    <i class="material-icons">edit</i>
-                </a>
-                <span class="badge red unpaid-badge">
-                    Impayé
-                </span>
-                <span class="logs">
-                </span>
-                <div class="billing-info">
-                    {% if visit.billed_duration %}
-                    {{ visit.duration | format_duration }} &rarr; {{ visit.billed_duration | format_duration }}
-                    = {{ "%.2f"|format(visit.billed_duration.total_seconds() / 3600 * entry_price) }} €
-                    {% endif %}
-                </div>
                 <span class="right actions">
-                    <a class="pay">
-                        <i class="material-icons">attach_money</i>
-                    </a>
-                    <a class="unpay">
-                        <i class="material-icons">money_off</i>
-                    </a>
                     <span class="entry-actions">
                         <input
                             class="entry-time"
@@ -167,6 +204,43 @@
                         <i class="material-icons">delete</i>
                     </a>
                 </span>
+                {% include "_visitor_item.html.j2" %}
+                <a href="{{ url_for('.visitor_edit', id=visitor.id) }}">
+                    <i class="material-icons">edit</i>
+                </a>
+                <span class="badge red unpaid-badge">
+                    Impayé
+                </span>
+                <span class="badge red no-bill-badge">
+                    0 facture
+                </span>
+                <span class="logs">
+                </span>
+                <div class="billing-info">
+                    <span class="duration-display">
+                        {% if visit.billed_duration is not none %}
+                        {{ visit.duration | format_duration }} &rarr; {{ visit.billed_duration | format_duration }}
+                        {% endif %}
+                    </span>
+                    =
+                    <input
+                        class="billed-amount{% if visit.billed_amount is not none %} overridden{% endif %}"
+                        type="number"
+                        step="0.5"
+                        min="0"
+                        value="{{ '%.2f' | format(visit.effective_price) if visit.effective_price is not none else '' }}"
+                        data-computed="{{ '%.2f' | format(visit.computed_price) if visit.computed_price is not none else '' }}"
+                    > &euro;
+                    <label class="paid-label">
+                        <input type="checkbox" class="paid-checkbox" {% if visit.paid %}checked{% endif %}>
+                        Payé
+                    </label>
+                    <a href="{{ url_for('.visit_bills', opening_id=opening.id, visitor_id=visitor.id) }}" title="Lier factures" style="vertical-align:middle;margin-left:0.5em;">
+                        <i class="material-icons" style="font-size:1.1em;">receipt</i> Factures ({{ visit.bills | length }})
+                    </a>
+                </div>
+                <textarea class="note" placeholder="Note...">{{ visit.note or '' }}</textarea>
+                <span class="note-add">+ Add note…</span>
             </li>
             {% endwith %}
             {% endfor %}
@@ -245,6 +319,7 @@
 <script>
 const BILLING_SEGMENT_MINUTES = {{ billing_segment_minutes }};
 const BILLING_MINIMUM_MINUTES = {{ billing_minimum_minutes }};
+const BILLING_MAX_MINUTES = {{ billing_max_minutes }};
 const ENTRY_PRICE_PER_HOUR = {{ entry_price }};
 
 function formatDuration(totalMinutes) {
@@ -255,8 +330,9 @@ function formatDuration(totalMinutes) {
 }
 
 function computeBilledMinutes(realMinutes) {
-    const fullSegments = Math.floor(realMinutes / BILLING_SEGMENT_MINUTES);
-    const remainder = realMinutes % BILLING_SEGMENT_MINUTES;
+    const capped = Math.min(realMinutes, BILLING_MAX_MINUTES);
+    const fullSegments = Math.floor(capped / BILLING_SEGMENT_MINUTES);
+    const remainder = capped % BILLING_SEGMENT_MINUTES;
     let billedSegments;
     if (fullSegments === 0) {
         billedSegments = 1;
@@ -272,8 +348,10 @@ function updateBillingInfo(visitContainer) {
     const entryInput = visitContainer.querySelector('.entry-time');
     const exitInput = visitContainer.querySelector('.exit-time');
     const billingInfo = visitContainer.querySelector('.billing-info');
+    const durationDisplay = visitContainer.querySelector('.duration-display');
+    const billedAmountInput = visitContainer.querySelector('.billed-amount');
     if (!entryInput.value || !exitInput.value) {
-        billingInfo.textContent = '';
+        if (durationDisplay) durationDisplay.textContent = '';
         return;
     }
     const [entryH, entryM] = entryInput.value.split(':').map(Number);
@@ -281,8 +359,16 @@ function updateBillingInfo(visitContainer) {
     let realMinutes = (exitH * 60 + exitM) - (entryH * 60 + entryM);
     if (realMinutes < 0) realMinutes += 24 * 60;
     const billedMinutes = computeBilledMinutes(realMinutes);
-    const price = (billedMinutes / 60 * ENTRY_PRICE_PER_HOUR).toFixed(2);
-    billingInfo.innerHTML = `${formatDuration(realMinutes)} &rarr; ${formatDuration(billedMinutes)} &mdash; ${price}&thinsp;&euro;`;
+    const computedPrice = (billedMinutes / 60 * ENTRY_PRICE_PER_HOUR).toFixed(2);
+    if (durationDisplay) {
+        durationDisplay.innerHTML = `${formatDuration(realMinutes)} &rarr; ${formatDuration(billedMinutes)}`;
+    }
+    if (billedAmountInput && !billedAmountInput.classList.contains('overridden')) {
+        billedAmountInput.value = computedPrice;
+        billedAmountInput.dataset.computed = computedPrice;
+    } else if (billedAmountInput) {
+        billedAmountInput.dataset.computed = computedPrice;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -327,8 +413,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const visitorId = visitContainer.dataset.visitorId;
             const deleteButton = visitContainer.querySelector('.delete');
             const logsContainer = visitContainer.querySelector('.logs');
-            const payButton = visitContainer.querySelector('.pay');
-            const unpayButton = visitContainer.querySelector('.unpay');
 
             async function setPaid(paid) {
                 const result = await fetch(`/api/openings/${openingId}/visitors/${visitorId}`, {
@@ -344,8 +428,52 @@ document.addEventListener('DOMContentLoaded', () => {
                 visitContainer.classList.toggle('unpaid', !paid);
             }
 
-            payButton.addEventListener('click', () => setPaid(true));
-            unpayButton.addEventListener('click', () => setPaid(false));
+            const paidCheckbox = visitContainer.querySelector('.paid-checkbox');
+            if (paidCheckbox) paidCheckbox.addEventListener('change', () => setPaid(paidCheckbox.checked));
+
+            const billedAmountInput = visitContainer.querySelector('.billed-amount');
+            if (billedAmountInput) {
+                async function saveBilledAmount() {
+                    const val = billedAmountInput.value.trim();
+                    const isOverride = val !== '' && val !== billedAmountInput.dataset.computed;
+                    const result = await fetch(`/api/openings/${openingId}/visitors/${visitorId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ billed_amount: isOverride ? parseFloat(val) : null }),
+                    });
+                    if (result.ok) {
+                        billedAmountInput.classList.toggle('overridden', isOverride);
+                        if (!isOverride) billedAmountInput.value = billedAmountInput.dataset.computed;
+                        logsContainer.textContent = 'Enregistré';
+                        setTimeout(() => { logsContainer.innerHTML = ''; }, 2000);
+                    }
+                }
+                billedAmountInput.addEventListener('change', saveBilledAmount);
+                billedAmountInput.addEventListener('blur', saveBilledAmount);
+            }
+
+            const noteInput = visitContainer.querySelector('.note');
+            const noteAdd = visitContainer.querySelector('.note-add');
+
+            noteAdd.addEventListener('click', () => {
+                visitContainer.classList.remove('note-empty');
+                noteInput.focus();
+            });
+
+            noteInput.addEventListener('blur', async () => {
+                const result = await fetch(`/api/openings/${openingId}/visitors/${visitorId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ note: noteInput.value }),
+                });
+                if (result.ok) {
+                    if (!noteInput.value.trim()) {
+                        visitContainer.classList.add('note-empty');
+                    }
+                    logsContainer.textContent = 'Enregistr\u00e9';
+                    setTimeout(() => { logsContainer.innerHTML = ''; }, 2000);
+                }
+            });
 
             deleteButton.addEventListener('click', async () => {
                 const result = await fetch(`/api/openings/${openingId}/visitors/${visitorId}`, {

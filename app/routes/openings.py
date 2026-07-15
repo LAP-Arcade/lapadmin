@@ -66,6 +66,14 @@ def update_visit(opening_id, visitor_id):
         )
         if "paid" in flask.request.json:
             visit.paid = bool(flask.request.json["paid"])
+        if "billed_amount" in flask.request.json:
+            value = flask.request.json["billed_amount"]
+            visit.billed_amount = (
+                float(value) if value not in (None, "") else None
+            )
+        if "note" in flask.request.json:
+            value = flask.request.json["note"]
+            visit.note = value.strip() or None
         for key in ("entry", "exit"):
             if key not in flask.request.json:
                 continue
@@ -77,7 +85,12 @@ def update_visit(opening_id, visitor_id):
             value = visit.opening.start.replace(
                 hour=int(hour), minute=int(minute)
             )
-            if value < (visit.opening.start - datetime.timedelta(hours=2)):
+            spans_midnight = (
+                visit.opening.end.date() > visit.opening.start.date()
+            )
+            if spans_midnight and value < (
+                visit.opening.start - datetime.timedelta(hours=2)
+            ):
                 value = value + datetime.timedelta(days=1)
             setattr(visit, key, value)
         s.commit()

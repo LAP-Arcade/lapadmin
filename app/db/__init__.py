@@ -108,6 +108,7 @@ from sqlalchemy import ForeignKey  # noqa: E402 F401
 from sqlalchemy.orm import relationship as relation  # noqa: E402 F401
 
 from .auth_token import AuthToken  # noqa: E402 F401
+from .bill import Bill  # noqa: E402 F401
 from .booking import Booking  # noqa: E402 F401
 from .opening import Opening  # noqa: E402 F401
 from .relationships.visit import Visit  # noqa: E402 F401

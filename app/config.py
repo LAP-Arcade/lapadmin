@@ -9,6 +9,7 @@ class Config:
     DISCORD_CLIENT_ID: str
     DISCORD_CLIENT_SECRET: str
     DEFAULT_ENTRY: str = "lap2"
+    SUMUP_API_KEY: str | None = None
 
     def __init__(self):
         if not PATH.exists():
