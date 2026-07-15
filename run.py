@@ -7,6 +7,9 @@ try:
 except ModuleNotFoundError as e:
     import os
 
+    if e.name and e.name.startswith("app."):
+        raise e
+
     print(f"{e}, creating venv and swapping process...")
 
     subprocess.check_call([sys.executable, "-m", "venv", ".venv"])
