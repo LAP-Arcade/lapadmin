@@ -61,6 +61,13 @@
     display: initial;
 }
 
+.visit .incomplete-badge {
+    display: none;
+}
+.visit.incomplete .incomplete-badge {
+    display: initial;
+}
+
 .visit .billing-info {
     display: none;
     font-size: 0.85em;
@@ -104,10 +111,10 @@
     font-size: 0.8em;
     color: gray;
     cursor: pointer;
-    margin-top: 0.25em;
+    margin-top: 0.4em;
 }
 .visit.note-empty .note-add {
-    display: inline;
+    display: block;
 }
 .visit input {
     height: initial;
@@ -119,6 +126,7 @@
 .visit .logs {
     font-size: 0.8em;
     color: gray;
+    margin-left: 0.5em;
 }
 
 .visit .mark-now .material-icons {
@@ -172,6 +180,7 @@
                     {% if visit.entry %}has-entry{% endif %}
                     {% if visit.finished %}finished{% endif %}
                     {% if not visit.note %}note-empty{% endif %}
+                    {% if visit.visitor.is_incomplete %}incomplete{% endif %}
                     {% if not visit.bills %}no-bills{% endif %}
                     "
                 data-visitor-id="{{ visitor.id }}"
@@ -214,6 +223,9 @@
                 <span class="badge red no-bill-badge">
                     0 facture
                 </span>
+                <span class="badge orange incomplete-badge">
+                    Incomplet
+                </span>
                 <span class="logs">
                 </span>
                 <div class="billing-info">
@@ -240,7 +252,7 @@
                     </a>
                 </div>
                 <textarea class="note" placeholder="Note...">{{ visit.note or '' }}</textarea>
-                <span class="note-add">+ Add note…</span>
+                <span class="note-add">+ Écrire une note...</span>
             </li>
             {% endwith %}
             {% endfor %}

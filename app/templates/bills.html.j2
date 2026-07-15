@@ -19,6 +19,9 @@
     font-size: 0.85em;
     text-transform: uppercase;
 }
+.bills-table tbody tr {
+    cursor: pointer;
+}
 .bills-table tr:hover td {
     background: #f9f9f9;
 }
@@ -48,12 +51,12 @@
 
 {% block content %}
 <div class="container">
-    <a class="btn-flat" href="{{ url_for('.calendar_day', month=opening_date | arrow('format', 'YYYY-MM'), day=opening_date | arrow('format', 'DD')) }}">
+    <a class="btn-flat" style="margin-top:1em;display:inline-block;" href="{{ url_for('.calendar_day', month=opening_date | arrow('format', 'YYYY-MM'), day=opening_date | arrow('format', 'DD')) }}">
         <i class="material-icons left">arrow_back</i>Retour au {{ opening_date | arrow('format', 'D MMM YYYY') }}
     </a>
     <h1>
-        Factures de {{ visitor.nick or visitor.full_name }}
-        <small class="grey-text">— {{ opening_date | arrow('format', 'D MMM YYYY') }}</small>
+        Associer des factures
+        <small class="grey-text">- {{ visitor.nick or visitor.full_name }} {{ opening_date | arrow('format', 'D MMM YYYY') }}</small>
     </h1>
 
     {% if error %}
@@ -132,6 +135,14 @@
 document.addEventListener('DOMContentLoaded', () => {
     const openingId = {{ opening_id | tojson }};
     const visitorId = {{ visitor_id | tojson }};
+
+    for (const row of document.querySelectorAll('.bills-table tbody tr')) {
+        row.addEventListener('click', (e) => {
+            if (e.target.closest('input[type="checkbox"]')) return;
+            const cb = row.querySelector('.bill-checkbox');
+            if (cb) cb.click();
+        });
+    }
 
     for (const cb of document.querySelectorAll('.bill-checkbox')) {
         cb.addEventListener('change', async () => {
