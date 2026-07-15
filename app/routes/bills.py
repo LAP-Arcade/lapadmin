@@ -23,6 +23,10 @@ def visit_bills(opening_id, visitor_id):
         transactions, links = sumup.list_transactions(
             limit=20, oldest_ref=oldest_ref, newest_ref=newest_ref
         )
+        if transactions and newest_ref:
+            links["prev_oldest_ref"] = transactions[0].id
+        if transactions and oldest_ref and "next_newest_ref" not in links:
+            links["next_newest_ref"] = transactions[-1].id
         error = None
     except Exception as e:
         transactions = []

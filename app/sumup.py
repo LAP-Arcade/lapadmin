@@ -18,7 +18,16 @@ _ENTRY_MODE_FR: dict[str, str] = {
 }
 
 
+_CARD_LOGOS: dict[str, str] = {
+    "VISA": "https://circuit.sumup.com/icons/v2/visa_32.svg",
+    "VISA_VPAY": "https://upload.wikimedia.org/wikipedia/commons/e/ed/VPay_logo_2015.svg",
+    "MASTERCARD": "https://circuit.sumup.com/icons/v2/mastercard_32.svg",
+    "MAESTRO": "https://circuit.sumup.com/icons/v2/mastercard_32.svg",
+}
+
+
 class Transaction(BaseModel):
+    id: str
     transaction_code: str
     amount: float
     currency: str
@@ -28,6 +37,12 @@ class Transaction(BaseModel):
     entry_mode: Optional[str] = None
     card_type: Optional[str] = None
     user: Optional[str] = None
+
+    @property
+    def card_logo_url(self) -> str | None:
+        if self.card_type:
+            return _CARD_LOGOS.get(self.card_type.upper())
+        return None
 
     @property
     def moyen(self) -> str:

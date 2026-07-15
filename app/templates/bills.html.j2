@@ -94,7 +94,13 @@
                     <td>{{ tx.timestamp | arrow('format', 'D MMM YYYY HH:mm') }}</td>
                     <td>{{ "%.2f" | format(tx.amount) }}&thinsp;{{ tx.currency }}</td>
                     <td>{{ tx.moyen }}</td>
-                    <td>{{ tx.card_type or '—' }}</td>
+                    <td style="text-align:center;">
+                        {% if tx.card_logo_url %}
+                        <img src="{{ tx.card_logo_url }}" alt="{{ tx.card_type }}" title="{{ tx.card_type }}" height="20" style="vertical-align:middle;">
+                        {% else %}
+                        {{ tx.card_type or '—' }}
+                        {% endif %}
+                    </td>
                     <td>{{ tx.user or '—' }}</td>
                     <td><code>{{ tx.transaction_code }}</code></td>
                 </tr>
