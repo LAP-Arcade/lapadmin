@@ -1,8 +1,18 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from arrow import Arrow
 
 from app import app
+
+
+@app.template_filter("format_duration")
+def format_duration(td: timedelta) -> str:
+    total_minutes = int(td.total_seconds() / 60)
+    hours = total_minutes // 60
+    mins = total_minutes % 60
+    if hours > 0:
+        return f"{hours}h{mins:02d}" if mins else f"{hours}h"
+    return f"{mins}min"
 
 
 @app.add_template_filter

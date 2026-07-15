@@ -43,6 +43,7 @@ def visitor_edit(id):
         visitor.last_name = form.last_name.data
         visitor.email = form.email.data
         visitor.nick = form.nick.data
+        s.add(visitor)
         s.commit()
         flask.flash(f"Profil du visiteur {visitor} enregistré")
 

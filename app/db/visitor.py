@@ -13,9 +13,6 @@ class Visitor(Table, Id):
     email: Column[str] = column(nullable=True)
 
     visits: Column[list["Visit"]] = relation("Visit", back_populates="visitor")
-    payments: Column[list["Payment"]] = relation(
-        "Payment", back_populates="visitor"
-    )
 
     @property
     def full_name(self):
@@ -31,7 +28,7 @@ class Visitor(Table, Id):
 
     @property
     def is_incomplete(self):
-        return not bool(self.first_name or self.last_name or self.email)
+        return not bool(self.first_name and self.last_name and self.email)
 
     def __gt__(self, other):
         def key(visitor):

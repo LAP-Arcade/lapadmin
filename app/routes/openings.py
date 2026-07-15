@@ -64,11 +64,14 @@ def update_visit(opening_id, visitor_id):
         visit = s.query(Visit).get(
             {"opening_id": opening_id, "visitor_id": visitor_id}
         )
+        if "paid" in flask.request.json:
+            visit.paid = bool(flask.request.json["paid"])
         for key in ("entry", "exit"):
             if key not in flask.request.json:
                 continue
             value = flask.request.json.get(key)
             if not value:
+                setattr(visit, key, None)
                 continue
             hour, minute = value.split(":")
             value = visit.opening.start.replace(

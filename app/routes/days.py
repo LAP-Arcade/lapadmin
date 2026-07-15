@@ -7,6 +7,11 @@ from wtforms.validators import DataRequired
 
 from app import app, private
 from app.db import Opening, visitor
+from app.db.relationships.visit import (
+    BILLING_MINIMUM_MINUTES,
+    BILLING_SEGMENT_MINUTES,
+    ENTRY_PRICE_PER_HOUR,
+)
 
 
 def get_translated_scopes() -> dict[str, str]:
@@ -82,4 +87,7 @@ def calendar_day(month, day):
         openings=openings,
         date=date,
         visitors=visitor.get_input_list(),
+        billing_segment_minutes=BILLING_SEGMENT_MINUTES,
+        billing_minimum_minutes=BILLING_MINIMUM_MINUTES,
+        entry_price=ENTRY_PRICE_PER_HOUR,
     )

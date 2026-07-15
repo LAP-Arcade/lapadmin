@@ -18,12 +18,39 @@
 
 .visit .mark-finished,
 .visit .mark-paused,
-.visit.started .mark-started {
+.visit.started .mark-started,
+.visit. {
     display: none;
 }
 .visit.started .mark-paused,
 .visit.started .mark-finished {
     display: initial;
+}
+
+.visit .pay,
+.visit.paid .pay,
+.visit.unpaid .unpay {
+    display: none;
+}
+.visit.has-entry.finished.unpaid .pay {
+    display: initial;
+}
+
+.visit .unpaid-badge {
+    display: none;
+}
+.visit.unpaid.finished .unpaid-badge {
+    display: initial;
+}
+
+.visit .billing-info {
+    display: none;
+    font-size: 0.85em;
+    color: gray;
+    margin-top: 0.25em;
+}
+.visit.has-entry.finished .billing-info {
+    display: block;
 }
 
 .visit input {
@@ -85,11 +112,9 @@
                 class="
                     visit
                     collection-item
-                    {% if visit.paid %}
-                    paid
-                    {% else %}
-                    unpaid
-                    {% endif %}
+                    {% if visit.paid %}paid{% else %}unpaid{% endif %}
+                    {% if visit.entry %}has-entry{% endif %}
+                    {% if visit.finished %}finished{% endif %}
                     "
                 data-visitor-id="{{ visitor.id }}"
             >
@@ -97,16 +122,23 @@
                 <a href="{{ url_for('.visitor_edit', id=visitor.id) }}">
                     <i class="material-icons">edit</i>
                 </a>
-                {% if visit.finished and not visit.paid %}
-                <span class="badge red">
+                <span class="badge red unpaid-badge">
                     Impayé
                 </span>
-                {% endif %}
                 <span class="logs">
                 </span>
+                <div class="billing-info">
+                    {% if visit.billed_duration %}
+                    {{ visit.duration | format_duration }} &rarr; {{ visit.billed_duration | format_duration }}
+                    = {{ "%.2f"|format(visit.billed_duration.total_seconds() / 3600 * entry_price) }} €
+                    {% endif %}
+                </div>
                 <span class="right actions">
-                    <a class="pay" href="{{ url_for('.pay') }}?visitor={{ visitor.id }}&opening={{ opening.id }}">
+                    <a class="pay">
                         <i class="material-icons">attach_money</i>
+                    </a>
+                    <a class="unpay">
+                        <i class="material-icons">money_off</i>
                     </a>
                     <span class="entry-actions">
                         <input
@@ -130,7 +162,8 @@
                         <a class="mark-now">
                             <i class="material-icons">timer</i>
                         </a>
-                    </span>                    <a class="delete">
+                    </span>
+                    <a class="delete">
                         <i class="material-icons">delete</i>
                     </a>
                 </span>
@@ -210,6 +243,48 @@
 
 {% block scripts %}
 <script>
+const BILLING_SEGMENT_MINUTES = {{ billing_segment_minutes }};
+const BILLING_MINIMUM_MINUTES = {{ billing_minimum_minutes }};
+const ENTRY_PRICE_PER_HOUR = {{ entry_price }};
+
+function formatDuration(totalMinutes) {
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    if (hours > 0) return mins > 0 ? `${hours}h${String(mins).padStart(2, '0')}` : `${hours}h`;
+    return `${mins}min`;
+}
+
+function computeBilledMinutes(realMinutes) {
+    const fullSegments = Math.floor(realMinutes / BILLING_SEGMENT_MINUTES);
+    const remainder = realMinutes % BILLING_SEGMENT_MINUTES;
+    let billedSegments;
+    if (fullSegments === 0) {
+        billedSegments = 1;
+    } else if (remainder > BILLING_MINIMUM_MINUTES) {
+        billedSegments = fullSegments + 1;
+    } else {
+        billedSegments = fullSegments;
+    }
+    return billedSegments * BILLING_SEGMENT_MINUTES;
+}
+
+function updateBillingInfo(visitContainer) {
+    const entryInput = visitContainer.querySelector('.entry-time');
+    const exitInput = visitContainer.querySelector('.exit-time');
+    const billingInfo = visitContainer.querySelector('.billing-info');
+    if (!entryInput.value || !exitInput.value) {
+        billingInfo.textContent = '';
+        return;
+    }
+    const [entryH, entryM] = entryInput.value.split(':').map(Number);
+    const [exitH, exitM] = exitInput.value.split(':').map(Number);
+    let realMinutes = (exitH * 60 + exitM) - (entryH * 60 + entryM);
+    if (realMinutes < 0) realMinutes += 24 * 60;
+    const billedMinutes = computeBilledMinutes(realMinutes);
+    const price = (billedMinutes / 60 * ENTRY_PRICE_PER_HOUR).toFixed(2);
+    billingInfo.innerHTML = `${formatDuration(realMinutes)} &rarr; ${formatDuration(billedMinutes)} &mdash; ${price}&thinsp;&euro;`;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     {% with name='visitors', data=visitors %}
     {% include "_autocomplete.js.j2" %}
@@ -252,6 +327,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const visitorId = visitContainer.dataset.visitorId;
             const deleteButton = visitContainer.querySelector('.delete');
             const logsContainer = visitContainer.querySelector('.logs');
+            const payButton = visitContainer.querySelector('.pay');
+            const unpayButton = visitContainer.querySelector('.unpay');
+
+            async function setPaid(paid) {
+                const result = await fetch(`/api/openings/${openingId}/visitors/${visitorId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paid }),
+                });
+                if (!result.ok) {
+                    console.error('Failed to update paid status');
+                    return;
+                }
+                visitContainer.classList.toggle('paid', paid);
+                visitContainer.classList.toggle('unpaid', !paid);
+            }
+
+            payButton.addEventListener('click', () => setPaid(true));
+            unpayButton.addEventListener('click', () => setPaid(false));
 
             deleteButton.addEventListener('click', async () => {
                 const result = await fetch(`/api/openings/${openingId}/visitors/${visitorId}`, {
@@ -282,6 +376,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         logsContainer.innerHTML = '<span style="color: red;">Erreur</span>';
                     } else {
                         logsContainer.textContent = 'Enregistré';
+                        if (field === 'exit') {
+                            visitContainer.classList.toggle('finished', !!timeInput.value);
+                        } else if (field === 'entry') {
+                            visitContainer.classList.toggle('has-entry', !!timeInput.value);
+                        }
+                        updateBillingInfo(visitContainer);
                     }
                     setTimeout(() => {
                         logsContainer.innerHTML = '';
