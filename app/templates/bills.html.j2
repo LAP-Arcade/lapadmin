@@ -52,11 +52,11 @@
 {% block content %}
 <div class="container">
     <a class="btn-flat" style="margin-top:1em;display:inline-block;" href="{{ url_for('.calendar_day', month=opening_date | arrow('format', 'YYYY-MM'), day=opening_date | arrow('format', 'DD')) }}">
-        <i class="material-icons left">arrow_back</i>Retour au {{ opening_date | arrow('format', 'D MMM YYYY') }}
+        <i class="material-icons left">arrow_back</i>Retour au {{ opening_date | arrow('format', 'D MMM YYYY', 'fr') }}
     </a>
     <h1>
         Associer des factures
-        <small class="grey-text">- {{ visitor.nick or visitor.full_name }} {{ opening_date | arrow('format', 'D MMM YYYY') }}</small>
+        <small class="grey-text">- {{ visitor.nick or visitor.full_name }} {{ opening_date | arrow('format', 'D MMM YYYY', 'fr') }}</small>
     </h1>
 
     {% if error %}
@@ -94,7 +94,7 @@
                             {% if tx.transaction_code in linked_refs %}checked{% endif %}
                         >
                     </td>
-                    <td>{{ tx.timestamp | arrow('format', 'D MMM YYYY HH:mm') }}</td>
+                    <td>{{ tx.timestamp | arrow('format', 'D MMM YYYY HH:mm', 'fr') }}</td>
                     <td>{{ "%.2f" | format(tx.amount) }}&thinsp;{{ tx.currency }}</td>
                     <td>{{ tx.moyen }}</td>
                     <td style="text-align:center;">

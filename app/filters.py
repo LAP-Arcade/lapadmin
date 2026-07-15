@@ -16,7 +16,7 @@ def format_duration(td: timedelta) -> str:
 
 
 @app.add_template_filter
-def arrow(value, func="humanize", arg=None) -> str:
+def arrow(value, func="humanize", arg=None, locale=None) -> str:
     if isinstance(value, str):
         value = datetime.fromisoformat(value)
         obj = Arrow.fromdatetime(value)
@@ -27,9 +27,10 @@ def arrow(value, func="humanize", arg=None) -> str:
     else:
         raise ValueError(f"Unsupported type: {type(value)} for {value}")
     f = getattr(obj, func)
+    kwargs = {"locale": locale} if locale else {}
     if arg:
-        return f(arg)
-    return f()
+        return f(arg, **kwargs)
+    return f(**kwargs)
 
 
 @app.template_filter("repr")
