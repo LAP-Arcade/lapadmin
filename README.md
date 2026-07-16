@@ -14,6 +14,8 @@ Production: https://admin.lelap.in
 - **(Only to force Discord login for private routes)** A Discord client ID and
   token filled as `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` in
   `config.yml`
+- **(Only to link SumUp bills to visits)** A SumUp API key as `SUMUP_API_KEY` in
+  `config.yml`
 
 ## Running
 
