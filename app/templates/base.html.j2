@@ -132,6 +132,8 @@
 
             M.FormSelect.init(document.querySelectorAll('select'));
 
+            M.Tooltip.init(document.querySelectorAll('.tooltipped'));
+
             for (let el of document.querySelectorAll('.flash-close')) {
                 el.addEventListener('click', function() {
                     this.parentElement.remove();

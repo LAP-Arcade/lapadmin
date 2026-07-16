@@ -16,6 +16,12 @@ def opening_delete(id):
         month = opening.start.strftime("%Y-%m")
         day = opening.start.strftime("%d")
         back = flask.url_for(".calendar_day", month=month, day=day)
+        if opening.visits:
+            flask.flash(
+                "Impossible de supprimer une journée contenant des visites.",
+                "error",
+            )
+            return flask.redirect(back)
     return routes.create_delete_response(Opening, back, id=id)
 
 

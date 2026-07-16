@@ -152,9 +152,14 @@
             <span class="badge">{{ opening.scope }}</span>
         </div>
         <div class="actions">
-            <a class="btn waves-effect waves-light red" href="{{ url_for('.opening_delete', id=opening.id) }}">
-                <i class="material-icons">delete</i>
-            </a>
+            <span class="delete-opening-wrapper {% if opening.visits %}tooltipped{% endif %}"
+                  data-position="left"
+                  data-tooltip="Impossible de supprimer une journée contenant des visites">
+                <a class="btn waves-effect waves-light red opening-delete{% if opening.visits %} disabled{% endif %}"
+                   href="{{ url_for('.opening_delete', id=opening.id) }}">
+                    <i class="material-icons">delete</i>
+                </a>
+            </span>
         </div>
     </header>
     <main>
@@ -496,6 +501,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 visitContainer.remove();
+
+                // Update delete opening button status if needed
+                if (openingContainer.querySelector('.visit')) {
+                    return;
+                }
+                const wrapper = openingContainer.querySelector('.delete-opening-wrapper');
+                openingContainer.querySelector('.opening-delete').classList.remove('disabled');
+                M.Tooltip.getInstance(wrapper)?.destroy();
+                wrapper.classList.remove('tooltipped');
             });
 
             for (const field of ['entry', 'exit']) {
