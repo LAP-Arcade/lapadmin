@@ -3,6 +3,8 @@ Arrow
 black
 Flask
 Flask-WTF
+google-api-python-client
+google-auth-oauthlib
 gspread
 Pydantic
 pyhumps
