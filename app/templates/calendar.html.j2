@@ -1,4 +1,6 @@
 {% extends "base.html.j2" %}
+{% set page_title = date.format('MMMM YYYY', locale='fr') | capitalize %}
+
 {% block styles %}
 <style>
     #calendar {
