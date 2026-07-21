@@ -89,14 +89,18 @@
 <body>
     <nav>
         <div class="nav-wrapper container">
-            <a href="{{ url_for('.index') }}" class="brand-logo">Lapadmin</a>
-            <ul class="right">
-                <li><a href="{{ url_for('.calendar_redirect') }}">Calendrier</a></li>
-                <li><a href="{{ url_for('.calendar_day', month=now.format('YYYY-MM'), day=now.format('DD')) }}">Aujourd'hui</a></li>
-                <li><a href="{{ url_for('.visitors') }}">Visiteurs</a></li>
+            <a href="{{ url_for('.index') }}" class="brand-logo">LAPAdmin</a>
+            <a href="#" data-target="mobile-nav" class="sidenav-trigger right hide-on-large-only">
+                <i class="material-icons" aria-label="Menu">menu</i>
+            </a>
+            <ul class="right hide-on-med-and-down">
+                {% include "_nav_links.html.j2" %}
             </ul>
         </div>
     </nav>
+    <ul class="sidenav" id="mobile-nav">
+        {% include "_nav_links.html.j2" %}
+    </ul>
     <div class="container">
         {% for category, message in get_flashed_messages(with_categories=true) %}
         {% macro get_category_class(category) %}
@@ -136,6 +140,8 @@
             });
 
             M.FormSelect.init(document.querySelectorAll('select'));
+
+            M.Sidenav.init(document.querySelectorAll('.sidenav'));
 
             M.Tooltip.init(document.querySelectorAll('.tooltipped'));
 
