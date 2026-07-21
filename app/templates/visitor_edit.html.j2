@@ -1,6 +1,25 @@
 {% extends "base.html.j2" %}
 {% set page_title = title if title else "Éditer " ~ visitor.nick %}
 
+{% block styles %}
+<style>
+    @media only screen and (max-width: 600px) {
+        .form-actions {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-actions .btn {
+            width: 100%;
+        }
+
+        .form-actions .btn + .btn {
+            margin-top: 8px;
+        }
+    }
+</style>
+{% endblock styles %}
+
 {% block content %}
 
 <div class="container">
@@ -15,35 +34,37 @@
     <form method="post" action="." class="widget">
         {{ form.hidden_tag() }}
         <div class="row">
-            <div class="input-field col s6">
+            <div class="input-field col s12 m6">
                 {{ form.first_name.label }}
                 {{ form.first_name }}
             </div>
-            <div class="input-field col s6">
+            <div class="input-field col s12 m6">
                 {{ form.last_name.label }}
                 {{ form.last_name }}
             </div>
         </div>
         <div class="row">
-            <div class="input-field col s6">
+            <div class="input-field col s12 m6">
                 {{ form.nick.label }}
                 {{ form.nick }}
             </div>
-            <div class="input-field col s6">
+            <div class="input-field col s12 m6">
                 {{ form.email.label }}
                 {{ form.email }}
             </div>
         </div>
 
-        <button class="btn waves-effect waves-light" type="submit" name="action">Enregistrer
-            <i class="material-icons right">send</i>
-        </button>
+        <div class="form-actions">
+            <button class="btn waves-effect waves-light" type="submit" name="action">Enregistrer
+                <i class="material-icons right">send</i>
+            </button>
 
-        {% if visitor %}
-        <a href="{{ url_for('.visitor_delete', id=visitor.id) }}" class="btn waves-effect waves-light red darken-1">Supprimer
-            <i class="material-icons right">delete</i>
-        </a>
-        {% endif %}
+            {% if visitor %}
+            <a href="{{ url_for('.visitor_delete', id=visitor.id) }}" class="btn waves-effect waves-light red darken-1">Supprimer
+                <i class="material-icons right">delete</i>
+            </a>
+            {% endif %}
+        </div>
     </form>
 </div>
 {% endblock content %}
