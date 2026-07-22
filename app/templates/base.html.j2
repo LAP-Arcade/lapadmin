@@ -83,6 +83,21 @@
             float: right;
             cursor: pointer;
         }
+
+        @media only screen and (max-width: 600px) {
+            .form-actions {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .form-actions .btn {
+                width: 100%;
+            }
+
+            .form-actions .btn + .btn {
+                margin-top: 8px;
+            }
+        }
     </style>
     {% block styles %}{% endblock %}
 </head>
