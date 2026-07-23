@@ -114,4 +114,5 @@ from .opening import Opening  # noqa: E402 F401
 from .relationships.visit import Visit  # noqa: E402 F401
 from .staff import Staff  # noqa: E402 F401
 from .staffing import Staffing  # noqa: E402 F401
+from .stream_state import StreamState  # noqa: E402 F401
 from .visitor import Visitor  # noqa: E402 F401

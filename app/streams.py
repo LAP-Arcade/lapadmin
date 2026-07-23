@@ -1,0 +1,422 @@
+from pydantic import BaseModel, computed_field
+from typing import Optional, List
+from string import Template
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+import yaml
+import os
+
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
+
+from app import app
+from app.db import StreamState
+
+SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
+INACTIVE_GRACE_PERIOD = timedelta(minutes=5)
+CLIENT_SECRET_FILE = "keys/client_secret.json"
+TOKEN_FILE = "keys/token.json"
+
+NOT_READY_TRANSITION_REASONS = {"invalidTransition", "errorStreamInactive"}
+
+DATA_DIR = Path("data").resolve()
+
+is_ready = os.path.exists(CLIENT_SECRET_FILE)
+
+_creds = None
+
+
+def _get_credentials():
+    global _creds
+    if _creds is not None:
+        return _creds
+
+    if not is_ready:
+        raise RuntimeError(
+            f"{CLIENT_SECRET_FILE} not found, YouTube integration is not configured."
+        )
+
+    if os.path.exists(TOKEN_FILE):
+        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+        creds.refresh(Request())
+    else:
+        flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+        creds = flow.run_local_server()
+        with open(TOKEN_FILE, "w") as token:
+            token.write(creds.to_json())
+
+    _creds = creds
+    return _creds
+
+
+def get_youtube():
+    return build("youtube", "v3", credentials=_get_credentials())
+
+
+class YoutubeStream(BaseModel):
+    title: str
+    description: str
+    id: str
+    url: str
+    video_embed_url: Optional[str] = None
+    chat_iframe_url: Optional[str] = None
+    playing: bool
+    created: datetime
+    started: Optional[datetime] = None
+    ended: Optional[datetime] = None
+
+
+class GameStreamEntry(BaseModel):
+    game: str
+    playlist: Optional[str] = None
+    unlisted: Optional[bool] = False
+
+
+class GameStreamConfig(BaseModel):
+    entries: List[GameStreamEntry]
+    title: str
+    description: str
+
+
+STREAM_STATUS_LABELS = {
+    "created": "En attente",
+    "ready": "En attente",
+    "active": "Connecté",
+    "inactive": "En attente",
+    "error": "Erreur",
+}
+
+STREAM_HEALTH_LABELS = {
+    "good": "Bon",
+    "ok": "Correct",
+    "bad": "Mauvais",
+    "noData": "Aucune donnée",
+}
+
+
+class LiveStreamInfo(BaseModel):
+    id: str
+    title: str
+    rtmp_url: str
+    stream_key: str
+    resolution: Optional[str] = None
+    frame_rate: Optional[str] = None
+    stream_status: Optional[str] = None
+    health_status: Optional[str] = None
+
+    @computed_field
+    @property
+    def is_active(self) -> bool:
+        return self.stream_status == "active"
+
+    @computed_field
+    @property
+    def stream_status_label(self) -> str:
+        return STREAM_STATUS_LABELS.get(self.stream_status, self.stream_status or "Inconnu")
+
+    @computed_field
+    @property
+    def health_status_label(self) -> Optional[str]:
+        if not self.health_status:
+            return None
+        return STREAM_HEALTH_LABELS.get(self.health_status, self.health_status)
+
+
+STATUS_LABELS = {
+    "created": "Créé",
+    "ready": "Prêt",
+    "testStarting": "Démarrage du test",
+    "testing": "En test",
+    "liveStarting": "Démarrage",
+    "live": "En direct",
+    "complete": "Terminé",
+    "revoked": "Annulé",
+}
+
+PRIVACY_LABELS = {
+    "public": "Public",
+    "unlisted": "Non répertorié",
+    "private": "Privé",
+}
+
+
+class BroadcastInfo(BaseModel):
+    id: str
+    title: str
+    url: str
+    status: str
+    privacy: str
+    published_at: datetime
+
+    @computed_field
+    @property
+    def status_label(self) -> str:
+        return STATUS_LABELS.get(self.status, self.status)
+
+    @computed_field
+    @property
+    def privacy_label(self) -> str:
+        return PRIVACY_LABELS.get(self.privacy, self.privacy)
+
+
+class StreamStatusResponse(BaseModel):
+    broadcast: Optional[BroadcastInfo] = None
+    live_stream: Optional[LiveStreamInfo] = None
+
+
+class GameStream(BaseModel):
+    game: str
+    playlist: Optional[str] = None
+    unlisted: Optional[bool] = False
+    title: str
+    description: str
+
+    @classmethod
+    def from_entry(
+        cls,
+        entry: GameStreamEntry,
+        title_template: str,
+        desc_template: str
+    ) -> "GameStream":
+        context = {"game": entry.game}
+
+        return cls(
+            game=entry.game,
+            playlist=entry.playlist,
+            unlisted=entry.unlisted,
+            title=Template(title_template).substitute(context),
+            description=Template(desc_template).substitute(context),
+        )
+
+    def _live_stream_title(self) -> str:
+        return f"LAP - {self.game}"
+
+    @staticmethod
+    def _live_stream_info(item: dict) -> LiveStreamInfo:
+        cdn = item["cdn"]
+        ingestion = cdn["ingestionInfo"]
+        status = item.get("status", {})
+        return LiveStreamInfo(
+            id=item["id"],
+            title=item["snippet"]["title"],
+            rtmp_url=ingestion["ingestionAddress"],
+            stream_key=ingestion["streamName"],
+            resolution=cdn.get("resolution"),
+            frame_rate=cdn.get("frameRate"),
+            stream_status=status.get("streamStatus"),
+            health_status=status.get("healthStatus", {}).get("status"),
+        )
+
+    def find_live_stream(self) -> Optional[LiveStreamInfo]:
+        title = self._live_stream_title()
+
+        existing = get_youtube().liveStreams().list(
+            part="id,snippet,cdn,status",
+            mine=True,
+            maxResults=50,
+        ).execute()
+
+        for item in existing.get("items", []):
+            if item["snippet"]["title"] == title:
+                return self._live_stream_info(item)
+
+        return None
+
+    def create_live_stream(self) -> LiveStreamInfo:
+        title = self._live_stream_title()
+
+        created = get_youtube().liveStreams().insert(
+            part="snippet,cdn,contentDetails,status",
+            body={
+                "snippet": {"title": title},
+                "cdn": {
+                    "resolution": "1080p",
+                    "frameRate": "60fps",
+                    "ingestionType": "rtmp",
+                },
+                "contentDetails": {"isReusable": True},
+            },
+        ).execute()
+
+        print(f'Created live stream: {created}')
+
+        return self._live_stream_info(created)
+
+    def find_or_create_live_stream(self) -> LiveStreamInfo:
+        return self.find_live_stream() or self.create_live_stream()
+
+    def find_latest_broadcast(self) -> Optional[BroadcastInfo]:
+        resp = get_youtube().liveBroadcasts().list(
+            part="snippet,status",
+            broadcastType="all",
+            mine=True,
+            maxResults=50,
+        ).execute()
+
+        matches = [
+            item
+            for item in resp.get("items", [])
+            if item["snippet"]["title"] == self.title
+        ]
+        if not matches:
+            return None
+
+        matches.sort(key=lambda item: item["snippet"]["publishedAt"], reverse=True)
+        item = matches[0]
+
+        return BroadcastInfo(
+            id=item["id"],
+            title=item["snippet"]["title"],
+            url=f"https://www.youtube.com/watch?v={item['id']}",
+            status=item["status"]["lifeCycleStatus"],
+            privacy=item["status"]["privacyStatus"],
+            published_at=item["snippet"]["publishedAt"],
+        )
+
+    def default_privacy(self) -> str:
+        return "unlisted" if self.unlisted else "public"
+
+    def create(self, privacy: Optional[str] = None) -> YoutubeStream:
+        live_stream = self.find_or_create_live_stream()
+
+        stream = get_youtube().liveBroadcasts().insert(
+            part="snippet,status,contentDetails",
+            body={
+                "snippet": {
+                    "title": self.title,
+                    "description": self.description,
+                    "scheduledStartTime": datetime.now(timezone.utc).isoformat(),
+                },
+                "contentDetails": {
+                    "enableAutoStart": False,
+                    "enableAutoStop": False,
+                },
+                "status": {
+                    "privacyStatus": privacy or self.default_privacy(),
+                },
+            }
+        ).execute()
+
+        print(f'Created stream: {stream}')
+
+        get_youtube().liveBroadcasts().bind(
+            id=stream["id"],
+            part="id,contentDetails",
+            streamId=live_stream.id,
+        ).execute()
+
+        print(f'Bound live stream {live_stream.id} to broadcast {stream["id"]}')
+
+        return YoutubeStream(
+            title=self.title,
+            description=self.description,
+            id=stream["id"],
+            url=f"https://www.youtube.com/watch?v={stream['id']}",
+            video_embed_url=f"https://www.youtube.com/embed/{stream['id']}",
+            chat_iframe_url=f"https://www.youtube.com/live_chat?is_popout=1&v={stream['id']}",
+            playing=False,
+            created=datetime.now(),
+            started=None,
+            ended=None,
+        )
+
+    def start_broadcast(self, privacy: Optional[str] = None) -> BroadcastInfo:
+        broadcast = self.find_latest_broadcast()
+        if broadcast is None or broadcast.status == "complete":
+            self.create(privacy=privacy)
+
+        return self.sync_broadcast_status()
+
+    def sync_broadcast_status(self) -> Optional[BroadcastInfo]:
+        broadcast = self.find_latest_broadcast()
+        if broadcast is None:
+            return None
+
+        if broadcast.status == "live":
+            live_stream = self.find_live_stream()
+            is_active = bool(live_stream and live_stream.is_active)
+            if is_active:
+                self._reset_inactivity()
+                return broadcast
+
+            inactive_since = self._get_or_set_inactive_since()
+            if datetime.now() - inactive_since >= INACTIVE_GRACE_PERIOD:
+                self._reset_inactivity()
+                return self.stop_broadcast()
+
+            return broadcast
+
+        if broadcast.status not in ("ready", "testing"):
+            return broadcast
+
+        next_status = "testing" if broadcast.status == "ready" else "live"
+
+        try:
+            get_youtube().liveBroadcasts().transition(
+                broadcastStatus=next_status,
+                id=broadcast.id,
+                part="status",
+            ).execute()
+        except HttpError as e:
+            if e.resp.status != 403 or not any(
+                reason in str(e) for reason in NOT_READY_TRANSITION_REASONS
+            ):
+                raise
+            return broadcast
+
+        return self.find_latest_broadcast()
+
+    def stop_broadcast(self) -> Optional[BroadcastInfo]:
+        broadcast = self.find_latest_broadcast()
+        if broadcast is None or broadcast.status == "complete":
+            return broadcast
+
+        get_youtube().liveBroadcasts().transition(
+            broadcastStatus="complete",
+            id=broadcast.id,
+            part="status",
+        ).execute()
+
+        return self.find_latest_broadcast()
+
+    def _get_or_set_inactive_since(self) -> datetime:
+        now = datetime.now()
+        with app.session() as s:
+            state = s.query(StreamState).filter_by(game=self.game).first()
+            if state is None:
+                s.add(StreamState(game=self.game, inactive_since=now))
+                s.commit()
+                return now
+
+            if state.inactive_since is None:
+                state.inactive_since = now
+                s.commit()
+                return now
+
+            return state.inactive_since
+
+    def _reset_inactivity(self) -> None:
+        with app.session() as s:
+            state = s.query(StreamState).filter_by(game=self.game).first()
+            if state and state.inactive_since is not None:
+                state.inactive_since = None
+                s.commit()
+
+
+def load_game_stream_config() -> GameStreamConfig:
+    with (DATA_DIR / "streams.yml").open(encoding="utf-8") as f:
+        data = yaml.safe_load(f)["streams"]
+
+    return GameStreamConfig(**data)
+
+
+def get() -> List[GameStream]:
+    config = load_game_stream_config()
+    return [
+        GameStream.from_entry(entry, config.title, config.description)
+        for entry in config.entries
+    ]
