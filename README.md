@@ -16,6 +16,11 @@ Production: https://admin.lelap.in
   `config.yml`
 - **(Only to link SumUp bills to visits)** A SumUp API key as `SUMUP_API_KEY` in
   `config.yml`
+- **(Only for YouTube stream management)** An OAuth client credentials JSON
+  file placed in `keys/client_secret.json`, see [Google's
+  documentation](https://developers.google.com/identity/protocols/oauth2/native-app)
+  for creating a Desktop app OAuth client; the first run opens a browser to
+  authorize it and caches the resulting token in `keys/token.json`
 
 ## Running
 

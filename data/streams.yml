@@ -1,0 +1,19 @@
+streams:
+  entries:
+    - game: beatmania IIDX 31 EPOLIS
+      playlist: https://www.youtube.com/playlist?list=PLs1Yrb_Yoc0z4IlIxl0jziW96RMatNG1e
+    - game: SOUND VOLTEX EXCEED GEAR
+      playlist: https://www.youtube.com/playlist?list=PLs1Yrb_Yoc0yWxeoXQSIxnchFJUAN0ozf
+    - game: jubeat Ave.
+      playlist: https://www.youtube.com/playlist?list=PLs1Yrb_Yoc0wSdt7nVZnygu9ajtnHba3h
+    - game: WACCA Reverse
+      unlisted: true
+  title: "${game} @ LAP Paris"
+  description: |
+    Le LAP est une salle d'arcade communautaire en région parisienne, tenue par des joueurs.
+    
+    Retrouvez ici en direct la borne ${game} pendant chaque ouverture.
+
+    Zenius : https://zenius-i-vanisher.com/
+    X : https://x.com/LAP_Arcade
+    Discord : https://discord.com/invite/yNeJ5exyRN
