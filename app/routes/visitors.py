@@ -1,6 +1,8 @@
+from datetime import date
+
 import flask
 from flask_wtf import FlaskForm
-from wtforms import EmailField, StringField
+from wtforms import BooleanField, EmailField, StringField
 
 from app import app, private, routes
 from app.db import Visitor
@@ -19,6 +21,7 @@ class VisitorEditForm(FlaskForm):
     last_name = StringField("Nom de famille")
     email = EmailField("Email")
     nick = StringField("Surnom")
+    is_member = BooleanField("Adhérent")
 
 
 @private.route("/visitors/<int:id>/")
@@ -43,6 +46,8 @@ def visitor_edit(id):
         visitor.last_name = form.last_name.data
         visitor.email = form.email.data
         visitor.nick = form.nick.data
+        if form.is_member.data and not visitor.adhesion_date:
+            visitor.adhesion_date = date.today()
         s.add(visitor)
         s.commit()
         flask.flash(f"Profil du visiteur {visitor} enregistré")
@@ -70,6 +75,8 @@ def visitor_new():
         visitor.last_name = form.last_name.data
         visitor.email = form.email.data
         visitor.nick = form.nick.data
+        if form.is_member.data:
+            visitor.adhesion_date = date.today()
         if not (visitor.full_name or visitor.nick):
             flask.flash("Impossible de créer un visiteur sans nom")
             return app.render("visitor_edit", form=form)
