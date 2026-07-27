@@ -67,6 +67,13 @@
     display: initial;
 }
 
+.visit .not-member-badge {
+    display: none;
+}
+.visit.not-member .not-member-badge {
+    display: initial;
+}
+
 .visit .billing-info {
     display: none;
     font-size: 0.85em;
@@ -222,6 +229,7 @@
                     {% if visit.finished %}finished{% endif %}
                     {% if not visit.note %}note-empty{% endif %}
                     {% if visit.visitor.is_incomplete %}incomplete{% endif %}
+                    {% if not visit.visitor.adhesion_date %}not-member{% endif %}
                     {% if not visit.bills %}no-bills{% endif %}
                     "
                 data-visitor-id="{{ visitor.id }}"
@@ -271,6 +279,9 @@
                 </span>
                 <span class="badge orange incomplete-badge">
                     Incomplet
+                </span>
+                <span class="badge red not-member-badge">
+                    Non adhérent
                 </span>
                 <span class="logs">
                 </span>
