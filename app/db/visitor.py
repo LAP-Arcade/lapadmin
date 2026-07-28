@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from . import Column, Id, Table, column, relation
@@ -13,6 +13,7 @@ class Visitor(Table, Id):
     nick: Column[str] = column(nullable=True)
     email: Column[str] = column(nullable=True)
     adhesion_date: Column[date | None] = column(nullable=True, default=None)
+    deleted_at: Column[datetime | None] = column(nullable=True, default=None)
 
     visits: Column[list["Visit"]] = relation("Visit", back_populates="visitor")
 
@@ -53,5 +54,8 @@ def get_input_list():
     with app.session() as s:
         return [
             v.input
-            for v in sorted(s.query(Visitor), key=lambda x: str(x).lower())
+            for v in sorted(
+                s.query(Visitor).filter(Visitor.deleted_at.is_(None)),
+                key=lambda x: str(x).lower(),
+            )
         ]

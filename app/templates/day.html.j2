@@ -256,9 +256,11 @@
                 </span>
                 <span class="visitor-name">
                     {% include "_visitor_item.html.j2" %}
+                    {% if not visitor.deleted_at %}
                     <a href="{{ url_for('.visitor_edit', id=visitor.id) }}">
                         <i class="material-icons">edit</i>
                     </a>
+                    {% endif %}
                     <a class="delete mobile-delete">
                         <i class="material-icons">delete</i>
                     </a>
