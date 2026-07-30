@@ -1,4 +1,4 @@
-{% if visitor.deleted_at %}
+{% if visitor.is_deleted %}
 <span class="title"><em>Visiteur supprimé</em></span>
 {% elif visitor.nick %}
 <span class="title">{{ visitor.nick }}</span>

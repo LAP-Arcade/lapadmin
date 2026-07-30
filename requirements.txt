@@ -6,6 +6,7 @@ Flask-WTF
 gspread
 Pydantic
 pyhumps
+pytest
 pyyaml
 SQLAlchemy
 unidecode

@@ -11,9 +11,7 @@ from app.db import Visitor
 @private.get("/visitors/")
 def visitors():
     with app.session() as s:
-        visitors = (
-            s.query(Visitor).filter(Visitor.deleted_at.is_(None)).all()
-        )
+        visitors = s.query(Visitor).filter(~Visitor.is_deleted).all()
         visitors.sort(key=lambda x: (x.nick or x.full_name).lower())
         return app.render("visitors", visitors=visitors)
 
@@ -67,10 +65,10 @@ def visitor_delete(id):
         if not form.validate_on_submit():
             return app.render("delete", form=form, entity=visitor, back=back)
         old_visitor = repr(visitor)
-        visitor.first_name = "[REDACTED]"
-        visitor.last_name = "[REDACTED]"
-        visitor.nick = "[REDACTED]"
-        visitor.email = "[REDACTED]"
+        visitor.first_name = None
+        visitor.last_name = None
+        visitor.nick = None
+        visitor.email = None
         visitor.deleted_at = datetime.now(UTC)
         s.add(visitor)
         s.commit()

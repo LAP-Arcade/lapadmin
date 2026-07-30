@@ -1,6 +1,8 @@
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
+from sqlalchemy.ext.hybrid import hybrid_property
+
 from . import Column, Id, Table, column, relation
 
 if TYPE_CHECKING:
@@ -8,8 +10,8 @@ if TYPE_CHECKING:
 
 
 class Visitor(Table, Id):
-    first_name: Column[str] = column(nullable=True)
-    last_name: Column[str] = column(nullable=True)
+    _first_name: Column[str] = column("first_name", nullable=True)
+    _last_name: Column[str] = column("last_name", nullable=True)
     nick: Column[str] = column(nullable=True)
     email: Column[str] = column(nullable=True)
     adhesion_date: Column[date | None] = column(nullable=True, default=None)
@@ -18,7 +20,29 @@ class Visitor(Table, Id):
     visits: Column[list["Visit"]] = relation("Visit", back_populates="visitor")
 
     @property
+    def first_name(self):
+        if self.is_deleted:
+            return "[REDACTED]"
+        return self._first_name
+
+    @first_name.setter
+    def first_name(self, value):
+        self._first_name = value
+
+    @property
+    def last_name(self):
+        if self.is_deleted:
+            return "[REDACTED]"
+        return self._last_name
+
+    @last_name.setter
+    def last_name(self, value):
+        self._last_name = value
+
+    @property
     def full_name(self):
+        if self.is_deleted:
+            return "[REDACTED]"
         if not self.first_name:
             return self.last_name
         if not self.last_name:
@@ -31,7 +55,11 @@ class Visitor(Table, Id):
 
     @property
     def is_incomplete(self):
-        return not bool(self.first_name and self.last_name and self.email)
+        return not self.is_deleted and not bool(self.first_name and self.last_name and self.email)
+
+    @hybrid_property
+    def is_deleted(self):
+        return self.deleted_at != None  # noqa: E711
 
     def __gt__(self, other):
         def key(visitor):
@@ -55,7 +83,7 @@ def get_input_list():
         return [
             v.input
             for v in sorted(
-                s.query(Visitor).filter(Visitor.deleted_at.is_(None)),
+                s.query(Visitor).filter(~Visitor.is_deleted),
                 key=lambda x: str(x).lower(),
             )
         ]
