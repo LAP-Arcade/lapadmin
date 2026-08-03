@@ -28,7 +28,7 @@ class VisitorEditForm(FlaskForm):
 def visitor_edit(id):
     with app.session() as s:
         visitor = s.query(Visitor).filter_by(id=id).first()
-    if not visitor or visitor.deleted_at is not None:
+    if not visitor or visitor.is_deleted:
         flask.abort(404)
 
     form = VisitorEditForm()
@@ -62,6 +62,8 @@ def visitor_delete(id):
     back = flask.url_for(".visitors")
     with app.session() as s:
         visitor = s.query(Visitor).filter_by(id=id).first()
+        if not visitor or visitor.is_deleted:
+            flask.abort(404)
         if not form.validate_on_submit():
             return app.render("delete", form=form, entity=visitor, back=back)
         old_visitor = repr(visitor)
@@ -72,7 +74,7 @@ def visitor_delete(id):
         visitor.deleted_at = datetime.now(UTC)
         s.add(visitor)
         s.commit()
-        flask.flash(f"Entité {repr(old_visitor)} supprimée")
+        flask.flash(f"Entité {old_visitor} supprimée")
     return flask.redirect(back)
 
 
