@@ -1,17 +1,17 @@
-from datetime import date
+from datetime import UTC, date, datetime
 
 import flask
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, EmailField, StringField
 
-from app import app, private, routes
+from app import app, private
 from app.db import Visitor
 
 
 @private.get("/visitors/")
 def visitors():
     with app.session() as s:
-        visitors = s.query(Visitor).all()
+        visitors = s.query(Visitor).filter(~Visitor.is_deleted).all()
         visitors.sort(key=lambda x: (x.nick or x.full_name).lower())
         return app.render("visitors", visitors=visitors)
 
@@ -28,7 +28,7 @@ class VisitorEditForm(FlaskForm):
 def visitor_edit(id):
     with app.session() as s:
         visitor = s.query(Visitor).filter_by(id=id).first()
-    if not visitor:
+    if not visitor or visitor.is_deleted:
         flask.abort(404)
 
     form = VisitorEditForm()
@@ -57,9 +57,25 @@ def visitor_edit(id):
 
 @private.route("/visitors/<int:id>/delete/")
 def visitor_delete(id):
-    return routes.create_delete_response(
-        Visitor, flask.url_for(".visitors"), id=id
-    )
+    # We don't actually delete the entry: we anonymize it to be able to keep the history of openings/visits.
+    form = FlaskForm()
+    back = flask.url_for(".visitors")
+    with app.session() as s:
+        visitor = s.query(Visitor).filter_by(id=id).first()
+        if not visitor or visitor.is_deleted:
+            flask.abort(404)
+        if not form.validate_on_submit():
+            return app.render("delete", form=form, entity=visitor, back=back)
+        old_visitor = repr(visitor)
+        visitor.first_name = None
+        visitor.last_name = None
+        visitor.nick = None
+        visitor.email = None
+        visitor.deleted_at = datetime.now(UTC)
+        s.add(visitor)
+        s.commit()
+        flask.flash(f"Entité {old_visitor} supprimée")
+    return flask.redirect(back)
 
 
 @private.route("/visitors/new/")

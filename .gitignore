@@ -2,6 +2,7 @@
 /config.yml
 /.venv
 __pycache__/
+tests/.pytest_cache/
 
 # Jetbrains related
 .idea
