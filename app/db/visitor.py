@@ -55,7 +55,10 @@ class Visitor(Table, Id):
 
     @property
     def is_incomplete(self):
-        return not self.is_deleted and not bool(self.first_name and self.last_name and self.email)
+        if self.is_deleted:
+            return False
+
+        return not bool(self.first_name and self.last_name and self.email)
 
     @hybrid_property
     def is_deleted(self):
