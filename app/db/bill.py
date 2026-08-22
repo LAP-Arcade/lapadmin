@@ -1,9 +1,8 @@
-import enum
 from enum import StrEnum
 
 import sqlalchemy as sa
 
-from . import Column, ForeignKey, Id, Table, column, relation
+from . import Column, Id, Table, relation
 
 bill_visits = sa.Table(
     "bill_visits",

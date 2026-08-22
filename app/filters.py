@@ -25,7 +25,7 @@ def arrow(value, func="humanize", arg=None, locale="fr") -> str:
     elif isinstance(value, Arrow):
         obj = value
     else:
-        raise ValueError(f"Unsupported type: {type(value)} for {value}")
+        raise TypeError(f"Unsupported type: {type(value)} for {value}")
     f = getattr(obj, func)
     if arg:
         return f(arg, locale=locale)

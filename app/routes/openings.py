@@ -1,5 +1,4 @@
 import datetime
-import typing as t
 
 import flask
 from flask import Response
@@ -27,7 +26,7 @@ def opening_delete(id):
 
 class OpeningVisitorModel(BaseModel):
     visitor_id: int = Field(alias="id")
-    nick: t.Optional[str]
+    nick: str | None
     full_name: str
 
 

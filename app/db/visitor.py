@@ -6,7 +6,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from . import Column, Id, Table, column, relation
 
 if TYPE_CHECKING:
-    from . import Payment, Visit
+    from . import Visit
 
 
 class Visitor(Table, Id):

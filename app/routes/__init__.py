@@ -13,5 +13,5 @@ def create_delete_response(model, back, **search):
             return app.render("delete", form=form, entity=entity, back=back)
         s.delete(entity)
         s.commit()
-        flask.flash(f"Entité {repr(entity)} supprimée")
+        flask.flash(f"Entité {entity!r} supprimée")
     return flask.redirect(back)

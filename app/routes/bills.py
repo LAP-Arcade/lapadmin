@@ -1,8 +1,8 @@
 import flask
 
 from app import app, private, sumup
-from app.db import Opening, Visit, Visitor
-from app.db.bill import Bill, bill_visits
+from app.db import Visit
+from app.db.bill import Bill
 
 
 @private.get("/openings/<opening_id>/visitors/<visitor_id>/bills")

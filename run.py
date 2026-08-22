@@ -1,14 +1,15 @@
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
 
 try:
-    import app as _
+    importlib.util.find_spec("app")
 except ModuleNotFoundError as e:
     import os
 
     if e.name and e.name.startswith("app."):
-        raise e
+        raise
 
     print(f"{e}, creating venv and swapping process...")
 
@@ -40,6 +41,7 @@ with app.session() as s:
     if not s.query(Visitor).count():
         print("Visitor table is empty, importing visitors from gsheet...")
         subprocess.run(
-            [Path(sys.executable).parent / "flask", "import", "visitors"]
+            [Path(sys.executable).parent / "flask", "import", "visitors"],
+            check=True,
         )
 app.run(host=args.host, port=args.port)

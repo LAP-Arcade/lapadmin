@@ -1,9 +1,8 @@
 import json
 import urllib.parse
 import urllib.request
-from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from app import app
 
@@ -33,10 +32,10 @@ class Transaction(BaseModel):
     currency: str
     timestamp: str
     status: str
-    payment_type: Optional[str] = None
-    entry_mode: Optional[str] = None
-    card_type: Optional[str] = None
-    user: Optional[str] = None
+    payment_type: str | None = None
+    entry_mode: str | None = None
+    card_type: str | None = None
+    user: str | None = None
 
     @property
     def card_logo_url(self) -> str | None:

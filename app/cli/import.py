@@ -45,14 +45,11 @@ class SheetVisitor(BaseModel):
                 print('Removing nick "+X de <name>"')
                 self.nick = None
 
-        if self.nick and self.nick.find("(") != -1:
-            if self.nick[-1] == ")":
-                nick = unidecode.unidecode(self.nick)
-                if nick.endswith("(a completer)") or nick.endswith(
-                    "(a remplir)"
-                ):
-                    print("Removing suffix", nick[nick.find("(") :])
-                    self.nick = self.nick[: self.nick.find("(")].strip()
+        if self.nick and self.nick.find("(") != -1 and self.nick[-1] == ")":
+            nick = unidecode.unidecode(self.nick)
+            if nick.endswith(("(a completer)", "(a remplir)")):
+                print("Removing suffix", nick[nick.find("(") :])
+                self.nick = self.nick[: self.nick.find("(")].strip()
 
         if self.nick and self.nick == self.full_name:
             print("Removing nick equal to full name", self.nick)

@@ -64,15 +64,14 @@ class App(Flask):
     def session(self, **kwargs):
         return db.session(**kwargs)
 
-    def make_response(self, return_value):
-        if isinstance(return_value, BaseModel):
-            return_value: BaseModel = return_value
-            return flask.jsonify(return_value.model_dump())
-        if return_value is None:
+    def make_response(self, rv):
+        if isinstance(rv, BaseModel):
+            return flask.jsonify(rv.model_dump())
+        if rv is None:
             return flask.Response(status=204)
-        if dataclasses.is_dataclass(return_value):
-            return flask.jsonify(dataclasses.asdict(return_value))
-        return super().make_response(return_value)
+        if dataclasses.is_dataclass(rv):
+            return flask.jsonify(dataclasses.asdict(rv))
+        return super().make_response(rv)
 
 
 class Blueprint(Blueprint):
