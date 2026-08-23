@@ -32,7 +32,10 @@ class AuthToken(Table, Id):
 
     @classmethod
     def validate(cls, session, token: str) -> "AuthToken":
-        id, token = token.split("-")
+        parts = token.split("-", 1)
+        if len(parts) != 2 or not parts[0].isdigit() or not parts[1]:
+            return None
+        id, token = parts
         entry = session.query(cls).filter_by(id=id, token=token).first()
         if entry and entry.is_valid:
             return entry
