@@ -45,3 +45,12 @@ class AuthToken(Table, Id):
         ):
             return entry
         return None
+
+    @classmethod
+    def delete_expired(cls, session) -> int:
+        cutoff = datetime.now(UTC).replace(tzinfo=None) - timedelta(days=30)
+        return (
+            session.query(cls)
+            .filter(cls.created < cutoff)
+            .delete(synchronize_session=False)
+        )
