@@ -10,8 +10,9 @@ def group():
 
 @group.command("run")
 def run():
+    tasks.run_all()
+
     if app.debug:
-        tasks.run_all()
         return
 
     scheduler = BlockingScheduler()
