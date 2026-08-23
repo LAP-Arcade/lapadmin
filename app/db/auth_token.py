@@ -37,7 +37,11 @@ class AuthToken(Table, Id):
         if len(parts) != 2 or not parts[0].isdigit() or not parts[1]:
             return None
         id, token = parts
-        entry = session.query(cls).filter_by(id=id, token=token).first()
-        if entry and entry.is_valid:
+        entry = session.query(cls).filter_by(id=id).first()
+        if (
+            entry
+            and secrets.compare_digest(entry.token, token)
+            and entry.is_valid
+        ):
             return entry
         return None
