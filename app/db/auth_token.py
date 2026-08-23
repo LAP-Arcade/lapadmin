@@ -32,7 +32,7 @@ class AuthToken(Table, Id):
         return f"{self.id}-{self.token}"
 
     @classmethod
-    def validate(cls, session, token: str) -> "AuthToken":
+    def validate(cls, session, token: str) -> "AuthToken | None":
         parts = token.split("-", 1)
         if len(parts) != 2 or not parts[0].isdigit() or not parts[1]:
             return None
