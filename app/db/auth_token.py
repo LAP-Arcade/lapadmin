@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
 from . import Column, ForeignKey, Id, Table, column, relation
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 class AuthToken(Table, Id):
     staff_id = column(ForeignKey("staffs.id"))
     token: Column[str] = column(nullable=False)
-    created: Column[datetime] = column(default=datetime.now)
+    created: Column[datetime] = column(default=lambda: datetime.now(UTC))
 
     staff: Column["Staff"] = relation("Staff", back_populates="tokens")
 
@@ -24,7 +24,8 @@ class AuthToken(Table, Id):
 
     @property
     def is_valid(self) -> bool:
-        return self.created > datetime.now() - timedelta(days=30)
+        created = self.created.replace(tzinfo=UTC)
+        return created > datetime.now(UTC) - timedelta(days=30)
 
     @property
     def cookie(self) -> str:
