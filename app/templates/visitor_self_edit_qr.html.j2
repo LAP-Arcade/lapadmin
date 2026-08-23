@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR code | LAPAdmin</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            height: 100%;
+        }
+
+        img {
+            image-rendering: optimizeSpeed;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #qr {
+            width: min(calc(100vw - 40px), calc(100vh - 40px));
+            aspect-ratio: 1;
+        }
+
+        #qr img, #qr canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="qr"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        const container = document.getElementById('qr');
+        new QRCode(container, {
+            text: {{ self_edit_url | tojson }},
+            width: 512,
+            height: 512,
+            correctLevel: QRCode.CorrectLevel.M,
+        });
+    </script>
+</body>
+</html>

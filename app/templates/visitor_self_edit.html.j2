@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Édition de profil | LAPAdmin</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f4f4f4;
+        }
+
+        .container {
+            max-width: 500px;
+            padding: 0 1em;
+        }
+
+        .widget {
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background: white;
+            padding: 1em;
+            margin: 1em auto;
+        }
+
+        .row {
+            margin-bottom: 0;
+        }
+
+        .row .col {
+            margin-bottom: 20px;
+        }
+
+        label.required::after {
+            content: " *";
+            color: #e53935;
+        }
+
+        label.checkbox-label {
+            color: #000;
+        }
+
+        .rules-list {
+            padding-left: 1.2em;
+            margin: 0.5em 0;
+        }
+
+        .rules-list li {
+            list-style-type: disc !important;
+            margin-bottom: 0.3em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h5>Mon profil d'adhérent au LAP</h5>
+
+        {% if saved %}
+        <div class="widget">
+            <p>
+                <i class="material-icons left green-text">check_circle</i>
+                Merci {{ visitor.short_name }}, ton profil a bien été enregistré.
+            </p>
+            <p>
+                <a href="#" onclick="window.close(); return false;">Fermer cette page</a>.
+            </p>
+        </div>
+        {% else %}
+        {% include "_form_errors.html.j2" %}
+
+        <form method="post" action="." class="widget">
+            {{ form.hidden_tag() }}
+            <div class="row">
+                <div class="col s12 input-field">
+                    {{ form.first_name.label(class_="required") }}
+                    {{ form.first_name }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s12 input-field">
+                    {{ form.last_name.label(class_="required") }}
+                    {{ form.last_name }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s12 input-field">
+                    {{ form.nick.label }}
+                    {{ form.nick }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s12 input-field">
+                    {{ form.email.label(class_="required") }}
+                    {{ form.email }}
+                </div>
+            </div>
+            {% if not visitor.is_member %}
+            <div class="row">
+                <div class="col s12">
+                    <p>
+                        <a>Ouvrir le règlement intérieur de l'association</a>.
+                        <br>
+                        <a>Ouvrir le règlement intérieur du local</a>.
+                    </p>
+                    <p>
+                        Brief :
+                        <ul class="rules-list">
+                            {% include "_rules_list.html.j2" %}
+                        </ul>
+                    </p>
+                    <label class="checkbox-label">
+                        {{ form.accept_rules }}
+                        <span><span class="red-text">*</span> J'ai lu et accepté le règlement intérieur de l'association ainsi que du local.</span>
+                    </label>
+                </div>
+            </div>
+            {% endif %}
+
+            <button class="btn waves-effect waves-light" type="submit" name="action">Enregistrer
+                <i class="material-icons right">send</i>
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            M.updateTextFields();
+        });
+    </script>
+</body>
+</html>

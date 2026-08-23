@@ -14,8 +14,9 @@ class Visitor(Table, Id):
     _last_name: Column[str] = column("last_name", nullable=True)
     nick: Column[str] = column(nullable=True)
     email: Column[str] = column(nullable=True)
-    adhesion_date: Column[date | None] = column(nullable=True, default=None)
+    member_since: Column[date | None] = column(nullable=True, default=None)
     deleted_at: Column[datetime | None] = column(nullable=True, default=None)
+    self_edit_uuid: Column[str | None] = column(nullable=True, default=None)
 
     visits: Column[list["Visit"]] = relation("Visit", back_populates="visitor")
 
@@ -40,6 +41,20 @@ class Visitor(Table, Id):
         self._last_name = value
 
     @property
+    def short_name(self):
+        if self.is_deleted:
+            return "[REDACTED]"
+        if self.nick:
+            return self.nick
+        if self.first_name:
+            return self.first_name
+        if self.last_name:
+            return self.last_name
+        if self.email:
+            return self.email.split("@")[0]
+        return "Empty"
+
+    @property
     def full_name(self):
         if self.is_deleted:
             return "[REDACTED]"
@@ -59,6 +74,14 @@ class Visitor(Table, Id):
             return False
 
         return not bool(self.first_name and self.last_name and self.email)
+
+    @property
+    def is_member(self):
+        return self.member_since is not None
+
+    def mark_as_member(self):
+        if not self.member_since:
+            self.member_since = date.today()
 
     @hybrid_property
     def is_deleted(self):
