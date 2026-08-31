@@ -27,6 +27,8 @@ def arrow(value, func="humanize", arg=None, locale="fr") -> str:
     else:
         raise TypeError(f"Unsupported type: {type(value)} for {value}")
     f = getattr(obj, func)
+    if func == "to":
+        return f(arg)
     if arg:
         return f(arg, locale=locale)
     return f(locale=locale)
