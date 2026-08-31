@@ -5,15 +5,13 @@ from app.db import Visit
 from app.db.bill import Bill
 
 
-@private.get("/openings/<opening_id>/visitors/<visitor_id>/bills")
-def visit_bills(opening_id, visitor_id):
+@private.get("/visits/<visit_id>/bills")
+def visit_bills(visit_id):
     oldest_ref = flask.request.args.get("oldest_ref")
     newest_ref = flask.request.args.get("newest_ref")
 
     with app.session() as s:
-        visit = s.query(Visit).get(
-            {"opening_id": opening_id, "visitor_id": visitor_id}
-        )
+        visit = s.query(Visit).filter_by(id=visit_id).first()
         visitor = visit.visitor
         opening = visit.opening
         opening_date = opening.start
@@ -35,8 +33,7 @@ def visit_bills(opening_id, visitor_id):
 
     return app.render(
         "bills",
-        opening_id=opening_id,
-        visitor_id=visitor_id,
+        visit_id=visit_id,
         visitor=visitor,
         opening_date=opening_date,
         transactions=transactions,
@@ -46,13 +43,11 @@ def visit_bills(opening_id, visitor_id):
     )
 
 
-@private.post("/api/openings/<opening_id>/visitors/<visitor_id>/bills")
-def link_bill(opening_id, visitor_id):
+@private.post("/api/visits/<visit_id>/bills")
+def link_bill(visit_id):
     data = flask.request.json
     with app.session() as s:
-        visit = s.query(Visit).get(
-            {"opening_id": opening_id, "visitor_id": visitor_id}
-        )
+        visit = s.query(Visit).filter_by(id=visit_id).first()
         bill = (
             s.query(Bill)
             .filter_by(service=Bill.Service.SUMUP, reference=data["reference"])
@@ -71,14 +66,10 @@ def link_bill(opening_id, visitor_id):
     return "", 204
 
 
-@private.delete(
-    "/api/openings/<opening_id>/visitors/<visitor_id>/bills/<reference>"
-)
-def unlink_bill(opening_id, visitor_id, reference):
+@private.delete("/api/visits/<visit_id>/bills/<reference>")
+def unlink_bill(visit_id, reference):
     with app.session() as s:
-        visit = s.query(Visit).get(
-            {"opening_id": opening_id, "visitor_id": visitor_id}
-        )
+        visit = s.query(Visit).filter_by(id=visit_id).first()
         bill = (
             s.query(Bill)
             .filter_by(service=Bill.Service.SUMUP, reference=reference)

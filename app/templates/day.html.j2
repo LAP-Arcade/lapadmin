@@ -123,7 +123,7 @@
 .visit.note-empty .note-add {
     display: block;
 }
-.visit input {
+.visit input, .visit input[type="number"] {
     height: initial;
     width: 4em;
     border: 1px solid gray;
@@ -138,6 +138,11 @@
 
 .visit .mark-now .material-icons {
     font-size: 1.3em;
+}
+
+.visit .add-invitee {
+    font-size: 0.85em;
+    white-space: nowrap;
 }
 
 .visit .mobile-delete {
@@ -218,7 +223,7 @@
             </div>
         </div>
         <ul class="collection">
-            {% for visit in opening.visits | sort(attribute='visitor') %}
+            {% for visit in opening.visits | sort(attribute='reference_visitor') %}
             {% with visitor = visit.visitor %}
             <li
                 class="
@@ -228,13 +233,17 @@
                     {% if visit.entry %}has-entry{% endif %}
                     {% if visit.finished %}finished{% endif %}
                     {% if not visit.note %}note-empty{% endif %}
-                    {% if visit.visitor.is_incomplete %}incomplete{% endif %}
-                    {% if not visit.visitor.member_since %}not-member{% endif %}
+                    {% if visitor and visitor.is_incomplete %}incomplete{% endif %}
+                    {% if visitor and not visitor.member_since %}not-member{% endif %}
                     {% if not visit.bills %}no-bills{% endif %}
                     "
-                data-visitor-id="{{ visitor.id }}"
+                data-visit-id="{{ visit.id }}"
             >
                 <span class="right actions">
+                    {% if not visit.invited_by %}
+                    <a class="add-invitee" data-visitor-id="{{ visitor.id }}">Ajouter un +1</a>
+                    -
+                    {% endif %}
                     <span class="entry-actions">
                         <input
                             class="entry-time"
@@ -263,11 +272,15 @@
                     </a>
                 </span>
                 <span class="visitor-name">
+                    {% if visit.invited_by_id %}
+                    <span class="title">+1 de {{ visit.invited_by }}</span>
+                    {% else %}
                     {% include "_visitor_item.html.j2" %}
                     {% if not visitor.is_deleted %}
                     <a href="{{ url_for('.visitor_edit', id=visitor.id) }}">
                         <i class="material-icons">edit</i>
                     </a>
+                    {% endif %}
                     {% endif %}
                     <a class="delete mobile-delete">
                         <i class="material-icons">delete</i>
@@ -306,7 +319,7 @@
                         <input type="checkbox" class="paid-checkbox" {% if visit.paid %}checked{% endif %}>
                         Payé
                     </label>
-                    <a href="{{ url_for('.visit_bills', opening_id=opening.id, visitor_id=visitor.id) }}" title="Lier factures" style="vertical-align:middle;margin-left:0.5em;">
+                    <a href="{{ url_for('.visit_bills', visit_id=visit.id) }}" title="Lier factures" style="vertical-align:middle;margin-left:0.5em;">
                         <i class="material-icons" style="font-size:1.1em;">receipt</i> Factures ({{ visit.bills | length }})
                     </a>
                 </div>
@@ -484,12 +497,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         for (const visitContainer of openingContainer.querySelectorAll('.visit')) {
-            const visitorId = visitContainer.dataset.visitorId;
+            const visitId = visitContainer.dataset.visitId;
             const deleteButtons = visitContainer.querySelectorAll('.delete');
             const logsContainer = visitContainer.querySelector('.logs');
 
             async function setPaid(paid) {
-                const result = await fetch(`/api/openings/${openingId}/visitors/${visitorId}`, {
+                const result = await fetch(`/api/visits/${visitId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ paid }),
@@ -510,7 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 async function saveBilledAmount() {
                     const val = billedAmountInput.value.trim();
                     const isOverride = val !== '' && val !== billedAmountInput.dataset.computed;
-                    const result = await fetch(`/api/openings/${openingId}/visitors/${visitorId}`, {
+                    const result = await fetch(`/api/visits/${visitId}`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ billed_amount: isOverride ? parseFloat(val) : null }),
@@ -535,7 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             noteInput.addEventListener('blur', async () => {
-                const result = await fetch(`/api/openings/${openingId}/visitors/${visitorId}`, {
+                const result = await fetch(`/api/visits/${visitId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ note: noteInput.value }),
@@ -550,7 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             async function deleteVisit() {
-                const result = await fetch(`/api/openings/${openingId}/visitors/${visitorId}`, {
+                const result = await fetch(`/api/visits/${visitId}`, {
                     method: 'DELETE',
                 });
                 if (!result.ok) {
@@ -570,12 +583,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             deleteButtons.forEach(btn => btn.addEventListener('click', deleteVisit));
 
+            const addInviteeLink = visitContainer.querySelector('.add-invitee');
+            if (addInviteeLink) {
+                addInviteeLink.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    const invitedBy = addInviteeLink.dataset.visitorId;
+                    const result = await fetch(`/api/openings/${openingId}/visitors/${invitedBy}/invitees`, {
+                        method: 'POST',
+                    });
+                    if (!result.ok) {
+                        console.error('Failed to add invitee');
+                        return;
+                    }
+                    window.location.href = window.location.href;
+                });
+            }
+
             for (const field of ['entry', 'exit']) {
                 const timeInput = visitContainer.querySelector(`.${field}-time`);
                 const markNow = visitContainer.querySelector(`.${field}-actions .mark-now`);
 
                 async function update() {
-                    const result = await fetch(`/api/openings/${openingId}/visitors/${visitorId}`, {
+                    const result = await fetch(`/api/visits/${visitId}`, {
                         method: 'PATCH',
                         headers: {
                             'Content-Type': 'application/json',

@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 from typing import TYPE_CHECKING
 
-from .. import Column, ForeignKey, Table, column, relation
+from .. import Column, ForeignKey, Id, Table, column, relation
 
 BILLING_SEGMENT_MINUTES = 30
 BILLING_MINIMUM_MINUTES = 10
@@ -15,20 +15,21 @@ if TYPE_CHECKING:
     from ..bill import Bill
 
 
-class Visit(Table):
-    visitor_id = column(ForeignKey("visitors.id"), primary_key=True)
-    opening_id = column(ForeignKey("openings.id"), primary_key=True)
+class Visit(Table, Id):
+    visitor_id = column(ForeignKey("visitors.id"), nullable=True)
+    opening_id = column(ForeignKey("openings.id"))
+    invited_by_id = column(ForeignKey("visitors.id"), nullable=True)
 
-    visitor: Column[Visitor] = relation("Visitor", back_populates="visits")
+    visitor: Column[Visitor | None] = relation(
+        "Visitor", foreign_keys=[visitor_id], back_populates="visits"
+    )
+    invited_by: Column[Visitor | None] = relation(
+        "Visitor", foreign_keys=[invited_by_id], back_populates="invitees"
+    )
     opening: Column[Opening] = relation("Opening", back_populates="visits")
     bills: Column[list[Bill]] = relation(
         "Bill",
         secondary="bill_visits",
-        primaryjoin=(
-            "and_(foreign(bill_visits.c.visitor_id) == Visit.visitor_id,"
-            " foreign(bill_visits.c.opening_id) == Visit.opening_id)"
-        ),
-        secondaryjoin="Bill.id == foreign(bill_visits.c.bill_id)",
         back_populates="visits",
     )
 
@@ -37,6 +38,10 @@ class Visit(Table):
     paid: Column[bool] = column(default=False, nullable=False)
     billed_amount: Column[float] = column(nullable=True)
     note: Column[str] = column(nullable=True)
+
+    @property
+    def reference_visitor(self) -> Visitor | None:
+        return self.visitor or self.invited_by
 
     @property
     def computed_price(self) -> float | None:

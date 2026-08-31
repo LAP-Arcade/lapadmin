@@ -40,22 +40,27 @@ def add_opening_visitor(id):
         s.commit()
 
 
-@private.delete("/api/openings/<opening_id>/visitors/<visitor_id>")
-def delete_visit(opening_id, visitor_id):
+@private.post("/api/openings/<opening_id>/visitors/<visitor_id>/invitees")
+def add_invitee(opening_id, visitor_id):
     with app.session() as s:
-        visit = s.query(Visit).get(
-            {"opening_id": opening_id, "visitor_id": visitor_id}
-        )
+        visit = Visit(opening_id=opening_id, invited_by_id=visitor_id)
+        s.add(visit)
+        s.commit()
+    return "", 204
+
+
+@private.delete("/api/visits/<id>")
+def delete_visit(id):
+    with app.session() as s:
+        visit = s.query(Visit).get(id)
         s.delete(visit)
         s.commit()
 
 
-@private.get("/api/openings/<opening_id>/visitors/<visitor_id>")
-def get_visit(opening_id, visitor_id):
+@private.get("/api/visits/<id>")
+def get_visit(id):
     with app.session() as s:
-        visit = s.query(Visit).get(
-            {"opening_id": opening_id, "visitor_id": visitor_id}
-        )
+        visit = s.query(Visit).get(id)
         if not visit:
             return Response(status=404)
         return {
@@ -63,12 +68,10 @@ def get_visit(opening_id, visitor_id):
         }
 
 
-@private.patch("/api/openings/<opening_id>/visitors/<visitor_id>")
-def update_visit(opening_id, visitor_id):
+@private.patch("/api/visits/<id>")
+def update_visit(id):
     with app.session() as s:
-        visit = s.query(Visit).get(
-            {"opening_id": opening_id, "visitor_id": visitor_id}
-        )
+        visit = s.query(Visit).get(id)
         if "paid" in flask.request.json:
             visit.paid = bool(flask.request.json["paid"])
         if "billed_amount" in flask.request.json:

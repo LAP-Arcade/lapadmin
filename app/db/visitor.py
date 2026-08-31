@@ -18,7 +18,12 @@ class Visitor(Table, Id):
     deleted_at: Column[datetime | None] = column(nullable=True, default=None)
     self_edit_uuid: Column[str | None] = column(nullable=True, default=None)
 
-    visits: Column[list["Visit"]] = relation("Visit", back_populates="visitor")
+    visits: Column[list["Visit"]] = relation(
+        "Visit", foreign_keys="Visit.visitor_id", back_populates="visitor"
+    )
+    invitees: Column[list["Visit"]] = relation(
+        "Visit", foreign_keys="Visit.invited_by_id", back_populates="invited_by"
+    )
 
     @property
     def first_name(self):
@@ -65,6 +70,15 @@ class Visitor(Table, Id):
         return f"{self.first_name} {self.last_name}"
 
     @property
+    def long_name(self):
+        name = self.full_name or self.email.split("@")[0]
+        if self.nick:
+            if not name:
+                return self.nick
+            name += f' "{self.nick}"'
+        return name or "Empty"
+
+    @property
     def input(self):
         return f"{self} (#{self.id})"
 
@@ -94,12 +108,7 @@ class Visitor(Table, Id):
         return key(self) > key(other)
 
     def __str__(self):
-        name = self.full_name or self.email.split("@")[0]
-        if self.nick:
-            if not name:
-                return self.nick
-            name += f' "{self.nick}"'
-        return name or "Empty"
+        return self.short_name
 
 
 def get_input_list():
