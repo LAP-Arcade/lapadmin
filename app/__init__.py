@@ -98,8 +98,8 @@ def create_app(debug=False):
 
         db.create_all()
 
-    from app import staffs
+    from app import staff
 
-    staffs.reset()
+    staff.reset()
 
     return app

@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+import flask
 from arrow import Arrow
 
 from app import app, private
-from app.db import Opening
+from app.db import Availability, Opening
 
 
 def get_calendar_start(month: Arrow) -> Arrow:
@@ -18,7 +19,9 @@ def get_calendar_end(month: Arrow) -> Arrow:
 @dataclass
 class Day:
     date: Arrow
-    openings: list[Opening] = None
+    openings: list[Opening]
+    availabilities: list[Availability]
+    me: Availability.Type | None = None
 
     @property
     def is_today(self):
@@ -62,11 +65,32 @@ def calendar_month(month):
             openings_by_day.setdefault(day, [])
             openings_by_day[day].append(opening)
 
+    availabilities_by_day = {}
+    with app.session() as s:
+        availabilities = s.query(Availability).filter(
+            Availability.date >= start.date(), Availability.date < end.date()
+        )
+    for availability in availabilities:
+        day = Arrow.fromdate(availability.date).format("MMDD")
+        availabilities_by_day.setdefault(day, [])
+        availabilities_by_day[day].append(availability)
+
     days = []
     for i in range((end - start).days):
         day = start.shift(days=i)
+        availabilities = availabilities_by_day.get(day.format("MMDD"), [])
+        me = None
+        for availability in availabilities:
+            if availability.staff_id == flask.request.user.id:
+                me = availability.type
+                break
         days.append(
-            Day(date=day, openings=openings_by_day.get(day.format("MMDD")))
+            Day(
+                date=day,
+                openings=openings_by_day.get(day.format("MMDD"), []),
+                availabilities=availabilities,
+                me=me,
+            )
         )
 
     return app.render(
@@ -76,4 +100,5 @@ def calendar_month(month):
         next=next,
         date=date,
         month=month,
+        Availability=Availability,
     )

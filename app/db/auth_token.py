@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 class AuthToken(Table, Id):
-    staff_id = column(ForeignKey("staffs.id"))
+    staff_id = column(ForeignKey("staff.id"))
     token: Column[str] = column(nullable=False)
     created: Column[datetime] = column(default=lambda: datetime.now(UTC))
 

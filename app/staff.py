@@ -13,15 +13,15 @@ class StaffEntry:
 
 
 def reset():
-    with (DATA_DIR / "staffs.yml").open() as f:
-        staffs = [
+    with (DATA_DIR / "staff.yml").open() as f:
+        staff = [
             StaffEntry(name, discord_id)
             for name, discord_id in yaml.safe_load(f).items()
         ]
     with app.session() as s:
-        db_staffs = s.query(Staff).all()
-        db_staff_by_name = {staff.name: staff for staff in db_staffs}
-        for staff in staffs:
+        db_staff = s.query(Staff).all()
+        db_staff_by_name = {staff.name: staff for staff in db_staff}
+        for staff in staff:
             if staff.name not in db_staff_by_name:
                 s.add(Staff(name=staff.name, discord_id=staff.discord_id))
                 s.commit()

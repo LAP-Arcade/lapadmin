@@ -78,10 +78,24 @@
 
     #calendar .cell {
         height: 100px;
+        cursor: pointer;
     }
 
     #calendar .cell-date-full {
         display: none;
+    }
+
+    #calendar .availability {
+        font-size: 0.75em;
+        height: 2em;
+        padding: 0;
+    }
+
+    #calendar .availability {
+        background: lightgreen;
+    }
+    #calendar .availability:has(option[value=""]:checked) {
+        background: white;
     }
 
     @media screen and (max-width: 700px) {
@@ -168,7 +182,8 @@
             {% for i in range(0, 6) %}
             <div class="calendar-row">
                 {% for day in days[0 + i * 7:7 + i * 7] %}
-                <a
+                <div
+                    data-date="{{ day.date.format('YYYY-MM-DD') }}"
                     class="
                         cell
                         {% if day.is_past %}past{% endif %}
@@ -177,7 +192,7 @@
                         {% if day.openings %}opening{% endif %}
                         {% if day.date.format('YYYY-MM') != month %}other-month{% endif %}
                     "
-                    href="{{ url_for('.calendar_day', month=day.date.format('YYYY-MM'), day=day.date.format('DD')) }}"
+                    {# href="{{ url_for('.calendar_day', month=day.date.format('YYYY-MM'), day=day.date.format('DD')) }}" #}
                 >
                     <span class="cell-date">
                         {{ day }}
@@ -186,15 +201,35 @@
                         {{ day.date.format('ddd D', locale='fr') | capitalize }}
                     </span>
                     <span class="staffings">
-
+                        {% for availability in day.availabilities %}
+                            <span class="staffing">{{ availability }}</span>
+                        {% endfor %}
                     </span>
                     <span class="actions">
-                        <label>
-                            <input type="checkbox">
-                            <span>Dispo</span>
+                        <select class="availability browser-default">
+                            <option value="">Dispo: non</option>
+                            <option
+                                value="{{ Availability.Type.ALL_DAY }}"
+                                {% if day.me == Availability.Type.ALL_DAY %}
+                                selected
+                                {% endif %}
+                            >Entière</option>
+                            <option
+                                value="{{ Availability.Type.OPENING }}"
+                                {% if day.me == Availability.Type.OPENING %}
+                                selected
+                                {% endif %}
+                            >Ouverture</option>
+                            <option
+                                value="{{ Availability.Type.CLOSING }}"
+                                {% if day.me == Availability.Type.CLOSING %}
+                                selected
+                                {% endif %}
+                            >Fermeture</option>
+                        </select>
                         </label>
                     </span>
-                </a>
+                </div>
                 {% endfor %}
             </div>
             {% endfor %}
@@ -202,3 +237,46 @@
     </main>
 </div>
 {% endblock content %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('#calendar .cell').forEach((cell) => {
+    cell.addEventListener('click', (event) => {
+        const date = cell.dataset.date;
+        const month = "{{ month }}";
+        const url = "{{ url_for('.calendar_day', month=month, day='') }}" + date.split('-')[2];
+
+        window.location.href = url;
+    });
+});
+document.querySelectorAll('#calendar .availability').forEach((select) => {
+    select.addEventListener('click', (event) => {
+        event.stopPropagation();
+    });
+    select.addEventListener('change', (event) => {
+        const value = event.target.value;
+        const cell = event.target.closest('.cell');
+        const url = "{{ url_for('.set_availability', date='') }}" + cell.dataset.date;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                type: value,
+            }),
+        }).then((response) => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        }).then((data) => {
+            console.log('Success:', data);
+        }).catch((error) => {
+            console.error('Error:', error);
+        });
+    });
+});
+</script>
+{% endblock scripts %}
