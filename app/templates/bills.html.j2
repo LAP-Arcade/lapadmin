@@ -109,9 +109,7 @@
                     </td>
                     <td>{{ tx.user or '—' }}</td>
                     <td>
-                        <a href="https://sales-receipt.sumup.com/pos/public/v1/{{ tx.merchant_code }}/receipt/{{ tx.receipt_id }}?format=html" target="_blank" rel="noopener noreferrer">
-                            <code>{{ tx.transaction_code }}</code>
-                        </a>
+                        <code>{{ tx.transaction_code }}</code>
                     </td>
                 </tr>
                 {% endfor %}
