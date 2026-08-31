@@ -1,3 +1,4 @@
+import functools
 import json
 import urllib.parse
 import urllib.request
@@ -32,6 +33,8 @@ class Transaction(BaseModel):
     currency: str
     timestamp: str
     status: str
+    client_transaction_id: str
+    product_summary: str | None = None
     payment_type: str | None = None
     entry_mode: str | None = None
     card_type: str | None = None
@@ -50,8 +53,20 @@ class Transaction(BaseModel):
             raw, self.entry_mode or self.payment_type or "—"
         )
 
+    @property
+    def client_transaction_id_short(self) -> str:
+        return self.client_transaction_id.split(":")[-2]
+
+    @property
+    def merchant_code(self) -> str:
+        return self.client_transaction_id.split(":")[-3]
+
     class Config:
         extra = "allow"
+
+    def model_post_init(self, __context):
+        if self.product_summary in ("Custom amount", "Montant personnalisé"):
+            self.product_summary = None
 
 
 def _get(path: str, params: dict = None) -> dict:
@@ -68,15 +83,10 @@ def _get(path: str, params: dict = None) -> dict:
         return json.loads(resp.read())
 
 
-_merchant_code_cache: str | None = None
-
-
+@functools.cache
 def get_merchant_code() -> str:
-    global _merchant_code_cache
-    if _merchant_code_cache is None:
-        data = _get("/v0.1/me/merchant-profile")
-        _merchant_code_cache = data["merchant_code"]
-    return _merchant_code_cache
+    data = _get("/v0.1/me/merchant-profile")
+    return data["merchant_code"]
 
 
 def list_transactions(

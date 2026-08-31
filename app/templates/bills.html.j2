@@ -73,6 +73,7 @@
                 <tr>
                     <th></th>
                     <th>Date</th>
+                    <th>Objet</th>
                     <th>Montant</th>
                     <th>Moyen</th>
                     <th>Carte</th>
@@ -96,6 +97,7 @@
                         >
                     </td>
                     <td>{{ tx.timestamp | arrow('format', 'D MMM YYYY HH:mm') }}</td>
+                    <td>{{ tx.product_summary or ''}}</td>
                     <td>{{ "%.2f" | format(tx.amount) }}&thinsp;{{ tx.currency }}</td>
                     <td>{{ tx.moyen }}</td>
                     <td style="text-align:center;">
@@ -106,7 +108,11 @@
                         {% endif %}
                     </td>
                     <td>{{ tx.user or '—' }}</td>
-                    <td><code>{{ tx.transaction_code }}</code></td>
+                    <td>
+                        <a href="https://sales-receipt.sumup.com/pos/public/v1/{{ tx.merchant_code }}/receipt/{{ tx.client_transaction_id_short }}?format=html" target="_blank" rel="noopener noreferrer">
+                            <code>{{ tx.transaction_code }}</code>
+                        </a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -134,9 +140,6 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const openingId = {{ opening_id | tojson }};
-    const visitorId = {{ visitor_id | tojson }};
-
     for (const row of document.querySelectorAll('.bills-table tbody tr')) {
         row.addEventListener('click', (e) => {
             if (e.target.closest('input[type="checkbox"]')) return;
@@ -149,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cb.addEventListener('change', async () => {
             const ref = cb.dataset.reference;
             if (cb.checked) {
-                await fetch(`/api/openings/${openingId}/visitors/${visitorId}/bills`, {
+                await fetch(`/api/visits/{{ visit_id }}/bills`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -161,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }),
                 });
             } else {
-                await fetch(`/api/openings/${openingId}/visitors/${visitorId}/bills/${encodeURIComponent(ref)}`, {
+                await fetch(`/api/visits/{{ visit_id }}/bills/${encodeURIComponent(ref)}`, {
                     method: 'DELETE',
                 });
             }
