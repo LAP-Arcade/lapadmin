@@ -53,18 +53,16 @@ class Transaction(BaseModel):
             raw, self.entry_mode or self.payment_type or "—"
         )
 
-    @property
-    def client_transaction_id_short(self) -> str:
-        return self.client_transaction_id.split(":")[-2]
-
-    @property
-    def merchant_code(self) -> str:
-        return self.client_transaction_id.split(":")[-3]
-
     class Config:
         extra = "allow"
 
     def model_post_init(self, __context):
+        if self.client_transaction_id.startswith("solo:sale:"):
+            self.merchant_code = self.client_transaction_id.split(":")[2]
+            self.receipt_id = self.client_transaction_id.split(":")[3]
+        if ":" not in self.client_transaction_id:
+            self.merchant_code = get_merchant_code()
+            self.receipt_id = self.client_transaction_id
         if self.product_summary in ("Custom amount", "Montant personnalisé"):
             self.product_summary = None
 
