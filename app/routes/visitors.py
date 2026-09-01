@@ -1,13 +1,15 @@
+from collections import Counter
 from datetime import UTC, date, datetime
 from uuid import uuid4
 
 import flask
+import sqlalchemy.orm
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, EmailField, StringField
 from wtforms.validators import DataRequired
 
 from app import app, private
-from app.db import Visitor
+from app.db import Opening, Visit, Visitor
 
 
 @private.get("/visitors/")
@@ -37,11 +39,26 @@ def visitor_edit(id):
     form.process(flask.request.form, obj=visitor)
 
     if not form.validate_on_submit():
+        with app.session() as s:
+            visits = (
+                s.query(Visit)
+                .filter(Visit.visitor_id == id)
+                .join(Opening)
+                .options(sqlalchemy.orm.contains_eager(Visit.opening))
+                .order_by(Opening.start.desc())
+                .all()
+            )
+            invitee_counts = Counter(
+                v.opening_id
+                for v in s.query(Visit).filter(Visit.invited_by_id == id)
+            )
         return app.render(
-            "visitor_edit",
+            "visitor",
             form=form,
             visitor=visitor,
             self_edit_link_form=FlaskForm(),
+            visits=visits,
+            invitee_counts=invitee_counts,
         )
 
     with app.session() as s:
@@ -118,7 +135,7 @@ def visitor_new():
     form = VisitorEditForm()
 
     if not form.validate_on_submit():
-        return app.render("visitor_edit", form=form, title="Nouveau visiteur")
+        return app.render("visitor", form=form, title="Nouveau visiteur")
 
     with app.session() as s:
         visitor = Visitor()
@@ -130,7 +147,7 @@ def visitor_new():
             visitor.member_since = date.today()
         if not (visitor.full_name or visitor.nick):
             flask.flash("Impossible de créer un visiteur sans nom")
-            return app.render("visitor_edit", form=form)
+            return app.render("visitor", form=form)
         s.add(visitor)
         s.commit()
         flask.flash(f"Profil du visiteur {visitor} enregistré")

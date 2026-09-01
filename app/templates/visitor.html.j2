@@ -1,5 +1,5 @@
 {% extends "base.html.j2" %}
-{% set page_title = title if title else "Éditer " ~ visitor.short_name %}
+{% set page_title = title if title else "Visiteur #" ~ visitor.id ~ " " ~ visitor.short_name %}
 
 {% block styles %}
 <style>
@@ -42,7 +42,7 @@
     {% if title %}
     <h1>{{ title }}</h1>
     {% elif visitor %}
-    <h1>Éditer visiteur #{{ visitor.id }} <small>{{ visitor.short_name }}</small></h1>
+    <h1>Visiteur #{{ visitor.id }} <small>{{ visitor.short_name }}</small></h1>
     {% endif %}
 
     {% include "_form_errors.html.j2" %}
