@@ -349,7 +349,10 @@ def parse_time_cell(value: str) -> time | None:
     if not parts[0]:
         return None
     try:
-        hour = int(parts[0])
+        # Some sheets write past-midnight times as e.g. "25:23" for 01:23 the
+        # next day - the day-rollover itself is handled where entry/exit are
+        # combined with the day (exit < entry gets bumped by one day).
+        hour = int(parts[0]) % 24
         minute = int(parts[1]) if len(parts) > 1 and parts[1] else 0
         return time(hour, minute)
     except ValueError:
