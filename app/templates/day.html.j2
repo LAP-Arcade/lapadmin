@@ -240,6 +240,10 @@
                 data-visit-id="{{ visit.id }}"
             >
                 <span class="right actions">
+                    <a href="{{ url_for('.visit_bills', visit_id=visit.id) }}" title="Lier factures" style="vertical-align:middle;margin-left:0.5em;">
+                        <i class="material-icons" style="font-size:1.1em;">receipt</i> Factures ({{ visit.bills | length }})
+                    </a>
+                    -
                     {% if not visit.invited_by %}
                     <a class="add-invitee" data-visitor-id="{{ visitor.id }}">Ajouter un +1</a>
                     -
@@ -319,9 +323,6 @@
                         <input type="checkbox" class="paid-checkbox" {% if visit.paid %}checked{% endif %}>
                         Payé
                     </label>
-                    <a href="{{ url_for('.visit_bills', visit_id=visit.id) }}" title="Lier factures" style="vertical-align:middle;margin-left:0.5em;">
-                        <i class="material-icons" style="font-size:1.1em;">receipt</i> Factures ({{ visit.bills | length }})
-                    </a>
                 </div>
                 <textarea class="note" placeholder="Note...">{{ visit.note or '' }}</textarea>
                 <span class="note-add">+ Écrire une note...</span>
