@@ -54,8 +54,12 @@ def calendar_month(month):
     start = get_calendar_start(date)
     end = get_calendar_end(date)
     with app.session() as s:
-        openings = s.query(Opening).filter(
-            Opening.start >= start.datetime, Opening.start < end.datetime
+        openings = (
+            s.query(Opening)
+            .filter(
+                Opening.start >= start.datetime, Opening.start < end.datetime
+            )
+            .all()
         )
 
     openings_by_day = {}
@@ -67,8 +71,13 @@ def calendar_month(month):
 
     availabilities_by_day = {}
     with app.session() as s:
-        availabilities = s.query(Availability).filter(
-            Availability.date >= start.date(), Availability.date < end.date()
+        availabilities = (
+            s.query(Availability)
+            .filter(
+                Availability.date >= start.date(),
+                Availability.date < end.date(),
+            )
+            .all()
         )
     for availability in availabilities:
         day = Arrow.fromdate(availability.date).format("MMDD")

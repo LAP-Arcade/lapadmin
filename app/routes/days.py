@@ -61,9 +61,16 @@ def calendar_day(month, day):
             flask.flash(f"L'ouverture du {start_date} a été crée.")
 
     with app.session() as s:
-        openings = s.query(Opening).filter(
-            ((Opening.start >= date) & (Opening.start <= f"{date} 23:59:59"))
-            | ((Opening.end >= date) & (Opening.end <= f"{date} 23:59:59")),
+        openings = (
+            s.query(Opening)
+            .filter(
+                (
+                    (Opening.start >= date)
+                    & (Opening.start <= f"{date} 23:59:59")
+                )
+                | ((Opening.end >= date) & (Opening.end <= f"{date} 23:59:59")),
+            )
+            .all()
         )
 
     def get_day_info(current: datetime, compare: datetime) -> str:
