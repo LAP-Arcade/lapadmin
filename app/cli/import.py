@@ -71,10 +71,12 @@ class SheetVisitor(BaseModel):
             self.nick = self.nick.strip(' "')
 
         if self.nick in NICK_OVERRIDES:
-            print(f"Overriding nick {self.nick!r} -> {NICK_OVERRIDES[self.nick]!r}")
+            print(
+                f"Overriding nick {self.nick!r} -> {NICK_OVERRIDES[self.nick]!r}"
+            )
             self.nick = NICK_OVERRIDES[self.nick]
         elif self.nick and is_guest_of_nick(self.nick):
-            print(f'Removing guest-of nick: {self.nick!r}')
+            print(f"Removing guest-of nick: {self.nick!r}")
             self.nick = None
 
         if self.nick and self.nick.find("(") != -1 and self.nick[-1] == ")":
@@ -358,122 +360,156 @@ def parse_tarif_cell(value: str) -> float | None:
         return None
 
 
+OPENINGS_FOLDER_ID = "1dJ0n7rkn-KheAWr6JTn1Wo6sCztlsb0q"
+
+
+def is_month_sheet_name(name: str) -> bool:
+    parts = name.split("-")
+    return (
+        len(parts) == 2
+        and all(part.isdigit() for part in parts)
+        and [len(part) for part in parts] == [4, 2]
+    )
+
+
 @import_.command()
-@click.argument("month")
-def openings(month):
+@click.argument("month", required=False)
+def openings(month=None):
     if not gsheet.is_ready:
         print("Google Sheets module is not ready")
         return
 
     from app.db import Opening, Visit, Visitor
 
-    sheet = gsheet.gc.open(month)
-    print("Got sheet", sheet)
-    for worksheet in sheet.worksheets():
-        if not is_day_worksheet_title(worksheet.title):
-            print("Skipping worksheet", worksheet.title)
-            continue
-        day = datetime.strptime(worksheet.title, "%Y-%m-%d").date()
+    if month:
+        months = [month]
+    else:
+        months = sorted(
+            f["name"]
+            for f in gsheet.gc.list_spreadsheet_files(
+                folder_id=OPENINGS_FOLDER_ID
+            )
+            if is_month_sheet_name(f["name"])
+        )
 
-        values = worksheet.get_all_values()
-        header = find_header_row(values)
-        if header is None:
-            print("  Could not find header row, skipping")
-            continue
-        header_row_index, columns = header
+    for month_name in months:
+        print(f"=== {month_name} ===")
+        sheet = gsheet.gc.open(month_name)
+        print("Got sheet", sheet)
+        for worksheet in sheet.worksheets():
+            if not is_day_worksheet_title(worksheet.title):
+                print("Skipping worksheet", worksheet.title)
+                continue
+            day = datetime.strptime(worksheet.title, "%Y-%m-%d").date()
 
-        with app.session() as s:
-            start = datetime.combine(day, time(16, 0))
-            opening = s.query(Opening).filter_by(start=start).first()
-            if opening:
-                print("  Opening already exists for", day)
-            else:
-                opening = Opening(
-                    start=start,
-                    end=datetime.combine(day, time(22, 0)),
-                    scope=Opening.Scope.PUBLIC,
-                )
-                s.add(opening)
-                print("Created opening", opening)
+            values = worksheet.get_all_values()
+            header = find_header_row(values)
+            if header is None:
+                print("  Could not find header row, skipping")
+                continue
+            header_row_index, columns = header
 
-            existing_visit_keys = {
-                (visit.visitor_id, visit.invited_by_id, visit.entry, visit.exit)
-                for visit in opening.visits
-            }
-
-            for row in values[header_row_index + 1 :]:
-                nick = get_cell(row, columns, "Pseudo")
-                if not nick or nick.startswith("LIMITE LEGALE"):
-                    continue
-                if nick.upper() == "NON":
-                    print("  Skipping placeholder row", nick)
-                    continue
-
-                db_visitor = None
-                invited_by = None
-                if is_guest_of_nick(nick):
-                    invited_by_nick = extract_invited_by_nick(nick)
-                    if invited_by_nick:
-                        invited_by = find_visitor_by_nick(
-                            s, Visitor, invited_by_nick
-                        )
-                    if not invited_by and invited_by_nick:
-                        click.secho(
-                            f"  Creating new visitor for inviter"
-                            f" {invited_by_nick!r} on {day}",
-                            fg="yellow",
-                        )
-                        invited_by = Visitor(nick=invited_by_nick)
-                        s.add(invited_by)
-                        s.flush()
+            with app.session() as s:
+                start = datetime.combine(day, time(16, 0))
+                opening = s.query(Opening).filter_by(start=start).first()
+                if opening:
+                    print("  Opening already exists for", day)
                 else:
-                    db_visitor = find_visitor_by_nick(s, Visitor, nick)
-                    if not db_visitor:
-                        click.secho(
-                            f"  Creating new visitor for nick {nick!r} on"
-                            f" {day}",
-                            fg="yellow",
-                        )
-                        db_visitor = Visitor(nick=nick)
-                        s.add(db_visitor)
-                        s.flush()
+                    opening = Opening(
+                        start=start,
+                        end=datetime.combine(day, time(22, 0)),
+                        scope=Opening.Scope.PUBLIC,
+                    )
+                    s.add(opening)
+                    print("Created opening", opening)
 
-                arrival = parse_time_cell(get_cell(row, columns, "Arrivée"))
-                departure = parse_time_cell(get_cell(row, columns, "Sortie"))
-                entry = datetime.combine(day, arrival) if arrival else None
-                exit_ = datetime.combine(day, departure) if departure else None
+                existing_visit_keys = {
+                    (
+                        visit.visitor_id,
+                        visit.invited_by_id,
+                        visit.entry,
+                        visit.exit,
+                    )
+                    for visit in opening.visits
+                }
 
-                visit_key = (
-                    db_visitor.id if db_visitor else None,
-                    invited_by.id if invited_by else None,
-                    entry,
-                    exit_,
-                )
-                if visit_key in existing_visit_keys:
-                    print("  Visit already exists for", nick, entry, exit_)
-                    continue
+                for row in values[header_row_index + 1 :]:
+                    nick = get_cell(row, columns, "Pseudo")
+                    if not nick or nick.startswith("LIMITE LEGALE"):
+                        continue
+                    if nick.upper() == "NON":
+                        print("  Skipping placeholder row", nick)
+                        continue
 
-                payment = get_cell(row, columns, "CB / Liquide")
-                notes = get_cell(row, columns, "Notes")
-                supplement = get_cell(row, columns, "Supplément")
-                note = ", ".join(
-                    part for part in (payment, notes, supplement) if part
-                )
+                    db_visitor = None
+                    invited_by = None
+                    if is_guest_of_nick(nick):
+                        invited_by_nick = extract_invited_by_nick(nick)
+                        if invited_by_nick:
+                            invited_by = find_visitor_by_nick(
+                                s, Visitor, invited_by_nick
+                            )
+                        if not invited_by and invited_by_nick:
+                            click.secho(
+                                f"  Creating new visitor for inviter"
+                                f" {invited_by_nick!r} on {day}",
+                                fg="yellow",
+                            )
+                            invited_by = Visitor(nick=invited_by_nick)
+                            s.add(invited_by)
+                            s.flush()
+                    else:
+                        db_visitor = find_visitor_by_nick(s, Visitor, nick)
+                        if not db_visitor:
+                            click.secho(
+                                f"  Creating new visitor for nick {nick!r} on"
+                                f" {day}",
+                                fg="yellow",
+                            )
+                            db_visitor = Visitor(nick=nick)
+                            s.add(db_visitor)
+                            s.flush()
 
-                visit = Visit(
-                    opening=opening,
-                    visitor=db_visitor,
-                    invited_by=invited_by,
-                    entry=entry,
-                    exit=exit_,
-                    paid=bool(entry and exit_),
-                    billed_amount=parse_tarif_cell(
-                        get_cell(row, columns, "Tarif")
-                    ),
-                    note=note or None,
-                )
-                s.add(visit)
-                existing_visit_keys.add(visit_key)
-                print("  Created visit", nick, entry, exit_)
+                    arrival = parse_time_cell(get_cell(row, columns, "Arrivée"))
+                    departure = parse_time_cell(
+                        get_cell(row, columns, "Sortie")
+                    )
+                    entry = datetime.combine(day, arrival) if arrival else None
+                    exit_ = (
+                        datetime.combine(day, departure) if departure else None
+                    )
 
-            s.commit()
+                    visit_key = (
+                        db_visitor.id if db_visitor else None,
+                        invited_by.id if invited_by else None,
+                        entry,
+                        exit_,
+                    )
+                    if visit_key in existing_visit_keys:
+                        print("  Visit already exists for", nick, entry, exit_)
+                        continue
+
+                    payment = get_cell(row, columns, "CB / Liquide")
+                    notes = get_cell(row, columns, "Notes")
+                    supplement = get_cell(row, columns, "Supplément")
+                    note = ", ".join(
+                        part for part in (payment, notes, supplement) if part
+                    )
+
+                    visit = Visit(
+                        opening=opening,
+                        visitor=db_visitor,
+                        invited_by=invited_by,
+                        entry=entry,
+                        exit=exit_,
+                        paid=bool(entry and exit_),
+                        billed_amount=parse_tarif_cell(
+                            get_cell(row, columns, "Tarif")
+                        ),
+                        note=note or None,
+                    )
+                    s.add(visit)
+                    existing_visit_keys.add(visit_key)
+                    print("  Created visit", nick, entry, exit_)
+
+                s.commit()
