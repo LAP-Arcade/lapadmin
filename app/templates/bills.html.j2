@@ -68,13 +68,14 @@
 
     {% if transactions %}
     <div class="widget">
+        <div class="table-scroll">
         <table class="bills-table">
             <thead>
                 <tr>
                     <th></th>
-                    <th>Date</th>
+                    <th class="nowrap">Date</th>
                     <th>Objet</th>
-                    <th>Montant</th>
+                    <th class="nowrap">Montant</th>
                     <th>Moyen</th>
                     <th>Carte</th>
                     <th>Caissier</th>
@@ -96,9 +97,9 @@
                             {% if tx.transaction_code in linked_refs %}checked{% endif %}
                         >
                     </td>
-                    <td>{{ tx.timestamp | arrow('to', 'Europe/Paris') | arrow('format', 'D MMM YYYY HH:mm')}}</td>
+                    <td class="nowrap">{{ tx.timestamp | arrow('to', 'Europe/Paris') | arrow('format', 'D MMM YYYY HH:mm')}}</td>
                     <td>{{ tx.product_summary or ''}}</td>
-                    <td>{{ "%.2f" | format(tx.amount) }}&thinsp;{{ tx.currency }}</td>
+                    <td class="nowrap">{{ "%.2f" | format(tx.amount) }}&thinsp;{{ tx.currency }}</td>
                     <td>{{ tx.moyen }}</td>
                     <td style="text-align:center;">
                         {% if tx.card_logo_url %}
@@ -115,6 +116,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
 
         <div class="pager">
             {% if 'prev_oldest_ref' in links %}
