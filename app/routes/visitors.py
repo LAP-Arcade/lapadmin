@@ -24,7 +24,7 @@ class VisitorEditForm(FlaskForm):
     first_name = StringField("Prénom")
     last_name = StringField("Nom de famille")
     email = EmailField("Email")
-    nick = StringField("Surnom")
+    nick = StringField("Pseudo")
     is_member = BooleanField("Adhérent")
 
 
@@ -159,7 +159,7 @@ class VisitorSelfEditForm(FlaskForm):
     first_name = StringField("Prénom", validators=[DataRequired()])
     last_name = StringField("Nom de famille", validators=[DataRequired()])
     email = EmailField("Email", validators=[DataRequired()])
-    nick = StringField("Surnom")
+    nick = StringField("Pseudo")
     accept_rules = BooleanField(validators=[DataRequired()])
 
 
