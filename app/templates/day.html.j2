@@ -152,6 +152,7 @@
 .visit .visitor-name {
     display: inline-flex;
     align-items: baseline;
+    flex-wrap: wrap;
     gap: 0.2em;
 }
 .visit .visitor-name .title {
@@ -286,21 +287,21 @@
                     </a>
                     {% endif %}
                     {% endif %}
+                    <span class="badge red unpaid-badge">
+                        Impayé
+                    </span>
+                    <span class="badge red no-bill-badge">
+                        0 facture
+                    </span>
+                    <span class="badge orange incomplete-badge">
+                        Incomplet
+                    </span>
+                    <span class="badge red not-member-badge">
+                        Non adhérent
+                    </span>
                     <a class="delete mobile-delete">
                         <i class="material-icons">delete</i>
                     </a>
-                </span>
-                <span class="badge red unpaid-badge">
-                    Impayé
-                </span>
-                <span class="badge red no-bill-badge">
-                    0 facture
-                </span>
-                <span class="badge orange incomplete-badge">
-                    Incomplet
-                </span>
-                <span class="badge red not-member-badge">
-                    Non adhérent
                 </span>
                 <span class="logs">
                 </span>
