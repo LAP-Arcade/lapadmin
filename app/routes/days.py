@@ -1,12 +1,13 @@
 from datetime import datetime
 
 import flask
+import sqlalchemy.orm
 from flask_wtf import FlaskForm
 from wtforms import SelectField, StringField
 from wtforms.validators import DataRequired
 
 from app import app, private
-from app.db import Opening, visitor
+from app.db import Opening, Visit, visitor
 from app.db.relationships.visit import (
     BILLING_MAX_MINUTES,
     BILLING_MINIMUM_MINUTES,
@@ -69,6 +70,17 @@ def calendar_day(month, day):
                     & (Opening.start <= f"{date} 23:59:59")
                 )
                 | ((Opening.end >= date) & (Opening.end <= f"{date} 23:59:59")),
+            )
+            .options(
+                sqlalchemy.orm.selectinload(Opening.visits).selectinload(
+                    Visit.visitor
+                ),
+                sqlalchemy.orm.selectinload(Opening.visits).selectinload(
+                    Visit.invited_by
+                ),
+                sqlalchemy.orm.selectinload(Opening.visits).selectinload(
+                    Visit.bills
+                ),
             )
             .all()
         )
