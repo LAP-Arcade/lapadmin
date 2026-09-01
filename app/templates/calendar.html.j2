@@ -56,6 +56,8 @@
     #calendar .weekend .cell-date { color: red }
     #calendar .past { background: rgb(230, 230, 230) }
     #calendar .opening { background: lightgreen }
+    #calendar .opening.private-only { background: #2e7d32; color: white }
+    #calendar .opening.private-only .cell-date-full { color: white }
 
     #calendar .today:after {
         content: '';
@@ -190,6 +192,7 @@
                         {% if day.is_today %}today{% endif %}
                         {% if day.is_weekend %}weekend{% endif %}
                         {% if day.openings %}opening{% endif %}
+                        {% if day.is_private_only %}private-only{% endif %}
                         {% if day.date.format('YYYY-MM') != month %}other-month{% endif %}
                     "
                     {# href="{{ url_for('.calendar_day', month=day.date.format('YYYY-MM'), day=day.date.format('DD')) }}" #}

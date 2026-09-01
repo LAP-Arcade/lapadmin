@@ -36,6 +36,12 @@ class Day:
     def is_past(self):
         return self.date < Arrow.fromdate(Arrow.now().date())
 
+    @property
+    def is_private_only(self):
+        return bool(self.openings) and all(
+            opening.scope == Opening.Scope.PRIVATE for opening in self.openings
+        )
+
     def __str__(self):
         return self.date.format("D")
 
