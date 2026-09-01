@@ -4,6 +4,7 @@ import gspread
 from gspread.exceptions import APIError
 
 MAX_RETRIES = 5
+RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 
 def _request_with_retry(request, self, method, endpoint, *args, **kwargs):
@@ -11,10 +12,14 @@ def _request_with_retry(request, self, method, endpoint, *args, **kwargs):
         try:
             return request(self, method, endpoint, *args, **kwargs)
         except APIError as e:
-            if e.response.status_code != 429 or attempt == MAX_RETRIES - 1:
+            status = e.response.status_code
+            if (
+                status not in RETRYABLE_STATUS_CODES
+                or attempt == MAX_RETRIES - 1
+            ):
                 raise
             wait = 32 * (2**attempt)
-            print(f"Google Sheets API rate limited, retrying in {wait}s...")
+            print(f"Google Sheets API error {status}, retrying in {wait}s...")
             time.sleep(wait)
     raise RuntimeError("unreachable")
 
