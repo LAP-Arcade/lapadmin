@@ -1,3 +1,6 @@
+from datetime import datetime, time
+
+import click
 import unidecode
 from pydantic import BaseModel, Field
 
@@ -45,6 +48,17 @@ class SheetVisitor(BaseModel):
                 print('Removing nick "+X de <name>"')
                 self.nick = None
 
+        if self.nick:
+            words = self.nick.split()
+            last_word = words[-1]
+            if (
+                len(words) > 1
+                and last_word.startswith("+")
+                and last_word[1:].isdigit()
+            ):
+                print(f'Removing "+N" guest tag nick: {self.nick}')
+                self.nick = None
+
         if self.nick and self.nick.find("(") != -1 and self.nick[-1] == ")":
             nick = unidecode.unidecode(self.nick)
             if nick.endswith(("(a completer)", "(a remplir)")):
@@ -65,6 +79,32 @@ class SheetVisitor(BaseModel):
         return not bool(
             self.first_name or self.last_name or self.email or self.nick
         )
+
+
+# Nicks that were renamed in the sheet at some point, without a stable id to
+# match the old and new row - map the new nick to old nick(s) also in use.
+NICK_ALIASES = {
+    "Meta": ["Meta-Link"],
+}
+
+# Known cases where a nick-only stub Visitor and a separate Visitor with the
+# real name/email are actually the same person - merge the stub into the
+# email-matched Visitor and delete the stub. "first_name" optionally
+# overrides the kept visitor's first name (e.g. a misspelled duplicate row).
+MERGE_NICK_INTO_EMAIL = {
+    "yozakura": {"email": "zzzbbr2003@gmail.com"},
+    "Razmotte": {"email": "spoonies@hotmail.fr", "first_name": "Morgan"},
+}
+
+
+def merge_visitor_duplicate(s, keep, remove):
+    for visit in list(remove.visits):
+        visit.visitor = keep
+    for visit in list(remove.invitees):
+        visit.invited_by = keep
+    if not keep.nick and remove.nick:
+        keep.nick = remove.nick
+    s.delete(remove)
 
 
 @import_.command()
@@ -88,25 +128,67 @@ def visitors():
             print("Skipping empty row", row)
             continue
         with app.session() as s:
+            merge_info = MERGE_NICK_INTO_EMAIL.get(sheet_visitor.nick)
+            if merge_info:
+                nick_visitor = (
+                    s.query(Visitor).filter_by(nick=sheet_visitor.nick).first()
+                )
+                email_visitor = (
+                    s.query(Visitor)
+                    .filter_by(email=merge_info["email"])
+                    .first()
+                )
+                if (
+                    nick_visitor
+                    and email_visitor
+                    and nick_visitor.id != email_visitor.id
+                ):
+                    print(f"  Merging {nick_visitor} into {email_visitor}")
+                    merge_visitor_duplicate(
+                        s, keep=email_visitor, remove=nick_visitor
+                    )
+                    if "first_name" in merge_info:
+                        email_visitor.first_name = merge_info["first_name"]
+                    s.commit()
+
+            candidates = {}
             if sheet_visitor.email:
-                db_visitor = (
+                v = (
                     s.query(Visitor)
                     .filter_by(email=sheet_visitor.email)
                     .first()
                 )
-            elif sheet_visitor.first_name and sheet_visitor.last_name:
-                db_visitor = (
+                if v:
+                    candidates[v.id] = v
+            if sheet_visitor.first_name and sheet_visitor.last_name:
+                v = (
                     s.query(Visitor)
-                    .filter_by(
-                        first_name=sheet_visitor.first_name,
-                        last_name=sheet_visitor.last_name,
+                    .filter(
+                        Visitor.first_name == sheet_visitor.first_name,
+                        Visitor.last_name == sheet_visitor.last_name,
                     )
                     .first()
                 )
-            else:
-                db_visitor = (
-                    s.query(Visitor).filter_by(nick=sheet_visitor.nick).first()
+                if v:
+                    candidates[v.id] = v
+            if sheet_visitor.nick:
+                nicks = [
+                    sheet_visitor.nick,
+                    *NICK_ALIASES.get(sheet_visitor.nick, []),
+                ]
+                for nick in nicks:
+                    v = s.query(Visitor).filter_by(nick=nick).first()
+                    if v:
+                        candidates[v.id] = v
+
+            if len(candidates) > 1:
+                click.secho(
+                    f"  Warning: {sheet_visitor} matches multiple existing"
+                    f" visitors: {list(candidates.values())}",
+                    fg="yellow",
                 )
+
+            db_visitor = next(iter(candidates.values()), None)
             if db_visitor:
                 print("Skipping existing user", db_visitor)
                 continue
@@ -123,3 +205,4 @@ def visitors():
             created.append(db_visitor)
 
     print("Created", len(created), "visitors")
+

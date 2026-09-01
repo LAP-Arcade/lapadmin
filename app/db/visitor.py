@@ -12,20 +12,26 @@ if TYPE_CHECKING:
 class Visitor(Table, Id):
     _first_name: Column[str] = column("first_name", nullable=True)
     _last_name: Column[str] = column("last_name", nullable=True)
-    nick: Column[str] = column(nullable=True)
+    _nick: Column[str] = column("nick", nullable=True)
     email: Column[str] = column(nullable=True)
     member_since: Column[date | None] = column(nullable=True, default=None)
     deleted_at: Column[datetime | None] = column(nullable=True, default=None)
     self_edit_uuid: Column[str | None] = column(nullable=True, default=None)
 
     visits: Column[list["Visit"]] = relation(
-        "Visit", foreign_keys="Visit.visitor_id", back_populates="visitor"
+        "Visit",
+        foreign_keys="Visit.visitor_id",
+        back_populates="visitor",
+        cascade="all, delete-orphan",
     )
     invitees: Column[list["Visit"]] = relation(
-        "Visit", foreign_keys="Visit.invited_by_id", back_populates="invited_by"
+        "Visit",
+        foreign_keys="Visit.invited_by_id",
+        back_populates="invited_by",
+        cascade="all, delete-orphan",
     )
 
-    @property
+    @hybrid_property
     def first_name(self):
         if self.is_deleted:
             return "[REDACTED]"
@@ -35,7 +41,11 @@ class Visitor(Table, Id):
     def first_name(self, value):
         self._first_name = value
 
-    @property
+    @first_name.expression
+    def first_name(cls):
+        return cls._first_name
+
+    @hybrid_property
     def last_name(self):
         if self.is_deleted:
             return "[REDACTED]"
@@ -44,6 +54,24 @@ class Visitor(Table, Id):
     @last_name.setter
     def last_name(self, value):
         self._last_name = value
+
+    @last_name.expression
+    def last_name(cls):
+        return cls._last_name
+
+    @hybrid_property
+    def nick(self):
+        if self.is_deleted:
+            return "[REDACTED]"
+        return self._nick
+
+    @nick.setter
+    def nick(self, value):
+        self._nick = value
+
+    @nick.expression
+    def nick(cls):
+        return cls._nick
 
     @property
     def short_name(self):
