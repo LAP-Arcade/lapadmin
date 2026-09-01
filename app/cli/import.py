@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 
 import click
 import unidecode
@@ -342,11 +342,16 @@ def find_visitor_by_nick(s, Visitor, nick: str):
 
 
 def parse_time_cell(value: str) -> time | None:
-    parts = value.split(":")
-    if len(parts) < 2:
+    if not value:
+        return None
+    # Older sheets write times as "17h30" or bare "17h" instead of "17:30".
+    parts = value.replace("h", ":").split(":")
+    if not parts[0]:
         return None
     try:
-        return time(int(parts[0]), int(parts[1]))
+        hour = int(parts[0])
+        minute = int(parts[1]) if len(parts) > 1 and parts[1] else 0
+        return time(hour, minute)
     except ValueError:
         return None
 
@@ -423,13 +428,8 @@ def openings(month=None):
                     s.add(opening)
                     print("Created opening", opening)
 
-                existing_visit_keys = {
-                    (
-                        visit.visitor_id,
-                        visit.invited_by_id,
-                        visit.entry,
-                        visit.exit,
-                    )
+                existing_visits_by_identity = {
+                    (visit.visitor_id, visit.invited_by_id): visit
                     for visit in opening.visits
                 }
 
@@ -478,23 +478,58 @@ def openings(month=None):
                     exit_ = (
                         datetime.combine(day, departure) if departure else None
                     )
-
-                    visit_key = (
-                        db_visitor.id if db_visitor else None,
-                        invited_by.id if invited_by else None,
-                        entry,
-                        exit_,
-                    )
-                    if visit_key in existing_visit_keys:
-                        print("  Visit already exists for", nick, entry, exit_)
-                        continue
+                    if entry and exit_ and exit_ < entry:
+                        # Sortie is past midnight (e.g. entry 21:04, exit 00:03)
+                        exit_ += timedelta(days=1)
 
                     payment = get_cell(row, columns, "CB / Liquide")
                     notes = get_cell(row, columns, "Notes")
                     supplement = get_cell(row, columns, "Supplément")
-                    note = ", ".join(
-                        part for part in (payment, notes, supplement) if part
+                    note = (
+                        ", ".join(
+                            part
+                            for part in (payment, notes, supplement)
+                            if part
+                        )
+                        or None
                     )
+
+                    identity_key = (
+                        db_visitor.id if db_visitor else None,
+                        invited_by.id if invited_by else None,
+                    )
+                    existing_visit = existing_visits_by_identity.get(
+                        identity_key
+                    )
+                    if existing_visit:
+                        updated_fields = []
+                        if entry is not None and existing_visit.entry is None:
+                            existing_visit.entry = entry
+                            updated_fields.append("entry")
+                        if exit_ is not None and existing_visit.exit is None:
+                            existing_visit.exit = exit_
+                            updated_fields.append("exit")
+                        if note is not None and existing_visit.note is None:
+                            existing_visit.note = note
+                            updated_fields.append("note")
+                        if not existing_visit.paid and bool(
+                            existing_visit.entry and existing_visit.exit
+                        ):
+                            existing_visit.paid = True
+                            updated_fields.append("paid")
+                        if updated_fields:
+                            print(
+                                f"  Updating visit for {nick}:"
+                                f" {', '.join(updated_fields)}"
+                            )
+                        else:
+                            print(
+                                "  Visit already exists for",
+                                nick,
+                                entry,
+                                exit_,
+                            )
+                        continue
 
                     visit = Visit(
                         opening=opening,
@@ -506,10 +541,10 @@ def openings(month=None):
                         billed_amount=parse_tarif_cell(
                             get_cell(row, columns, "Tarif")
                         ),
-                        note=note or None,
+                        note=note,
                     )
                     s.add(visit)
-                    existing_visit_keys.add(visit_key)
+                    existing_visits_by_identity[identity_key] = visit
                     print("  Created visit", nick, entry, exit_)
 
                 s.commit()
