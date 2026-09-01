@@ -117,6 +117,7 @@ NICK_ALIASES = {
     "Xjemomo": ["Yumeko"],
     "Sylvain (Champigny joue)": ["Sylvain (Coeuilly) Champigny joue"],
     "Razmotte": ["Morgane Dahuron"],
+    "Matronyme / LeJambonHerta": ["Matronyme"],
 }
 
 # Reverse of NICK_ALIASES (old alias -> canonical nick), so lookups work
@@ -143,6 +144,7 @@ NICK_RENAMES = {
 MERGE_NICK_INTO_EMAIL = {
     "yozakura": {"email": "zzzbbr2003@gmail.com"},
     "Razmotte": {"email": "spoonies@hotmail.fr", "first_name": "Morgan"},
+    "Matronyme": {"email": "matronyus2@gmail.com"},
 }
 
 
