@@ -156,7 +156,9 @@
 
             M.FormSelect.init(document.querySelectorAll('select'));
 
-            M.Sidenav.init(document.querySelectorAll('.sidenav'));
+            M.Sidenav.init(document.querySelectorAll('.sidenav'), {
+                edge: 'right',
+            });
 
             M.Tooltip.init(document.querySelectorAll('.tooltipped'));
 
