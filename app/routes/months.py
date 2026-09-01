@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import flask
+import sqlalchemy.orm
 from arrow import Arrow
 
 from app import app, private
@@ -77,6 +78,7 @@ def calendar_month(month):
                 Availability.date >= start.date(),
                 Availability.date < end.date(),
             )
+            .options(sqlalchemy.orm.selectinload(Availability.staff))
             .all()
         )
     for availability in availabilities:
